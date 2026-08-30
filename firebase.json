@@ -1,0 +1,40 @@
+{
+  "hosting": {
+    "public": "app/static",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/v1/**",
+        "run": {
+          "serviceId": "controlplane-api",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/audit",
+        "run": {
+          "serviceId": "controlplane-api",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/health",
+        "run": {
+          "serviceId": "controlplane-api",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "controlplane-api",
+          "region": "us-central1"
+        }
+      }
+    ]
+  }
+}
