@@ -162,6 +162,22 @@ async def dashboard():
     return {"message": "ControlPlane API is running. Visit /health or POST /v1/chat"}
 
 
+@app.get("/style.css")
+async def get_style_css():
+    css_file = STATIC_DIR / "style.css"
+    if css_file.exists():
+        return FileResponse(str(css_file), media_type="text/css")
+    raise HTTPException(status_code=404, detail="style.css not found")
+
+
+@app.get("/app.js")
+async def get_app_js():
+    js_file = STATIC_DIR / "app.js"
+    if js_file.exists():
+        return FileResponse(str(js_file), media_type="application/javascript")
+    raise HTTPException(status_code=404, detail="app.js not found")
+
+
 @app.get("/health")
 async def health():
     return {
