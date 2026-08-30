@@ -735,6 +735,18 @@ async function fetchAuditLogs() {
       spendEl.innerText = `$${totalSpend.toFixed(4)} / $10.00`;
     }
 
+    // Update 3 Hero Stat Summary Boxes
+    const reqCountEl = document.getElementById("stat-requests-count");
+    if (reqCountEl) reqCountEl.innerText = logs.length;
+
+    const blockedCount = logs.filter(l => (l.decision_action || "").toUpperCase() === "BLOCK").length;
+    const blockedCountEl = document.getElementById("stat-blocked-count");
+    if (blockedCountEl) blockedCountEl.innerText = blockedCount;
+
+    const escalatedCount = logs.filter(l => (l.decision_action || "").toUpperCase() === "ESCALATE").length;
+    const escalatedCountEl = document.getElementById("stat-escalated-count");
+    if (escalatedCountEl) escalatedCountEl.innerText = escalatedCount;
+
   } catch (e) {
     console.error("Failed to fetch audit logs:", e);
   }
