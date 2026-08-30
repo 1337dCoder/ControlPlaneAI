@@ -517,6 +517,17 @@ function appendLoadingAssistant() {
   return id;
 }
 
+function formatAssistantResponseText(rawText) {
+  if (!rawText) return { mainBody: "", summarySection: null };
+  const match = rawText.match(/\n\s*(?:Confidence Level|Key Caveats|Truth Envelope Verification):/i);
+  if (match && match.index !== undefined) {
+    const mainBody = rawText.slice(0, match.index).trim();
+    const summarySection = rawText.slice(match.index).trim();
+    return { mainBody, summarySection };
+  }
+  return { mainBody: rawText, summarySection: null };
+}
+
 /**
  * Renders assistant response with smooth Claude-style typewriter streaming animation
  */
@@ -529,33 +540,41 @@ function renderAssistantResponseWithTypewriter(loadingId, resp) {
 
   // Header badges
   let badgesHtml = `
-    <div class="assistant-header-pillbox">
-      <span class="cp-pill cp-pill-${actionClass}">DECISION: ${resp.decision.action}</span>
-      <span class="cp-pill cp-pill-tier">${resp.tier.toUpperCase()} (${resp.model_used})</span>
-      <span class="cp-pill" style="color: var(--pink-light); background: var(--pink-soft);">CONFIDENCE: ${resp.confidence.state} (${(score * 100).toFixed(0)}%)</span>
+    <div class="assistant-meta-strip">
+      <div class="meta-pills-row">
+        <span class="cp-pill cp-pill-${actionClass}">DECISION: ${resp.decision.action}</span>
+        <span class="cp-pill cp-pill-tier">${resp.tier.toUpperCase()} (${resp.model_used})</span>
+        <span class="cp-pill" style="color: var(--pink-light); background: var(--pink-soft);">CONFIDENCE: ${resp.confidence.state} (${(score * 100).toFixed(0)}%)</span>
   `;
   if (resp.cached) {
-    badgesHtml += `<span class="cp-pill cp-pill-cache">⚡ DEDUP HIT (0 Tokens)</span>`;
+    badgesHtml += `<span class="cp-pill cp-pill-allow">⚡ DEDUP HIT (0 Tokens)</span>`;
   }
   if (resp.decision.edits_applied && resp.decision.edits_applied.length > 0) {
     badgesHtml += `<span class="cp-pill cp-pill-edit">EDITS: ${resp.decision.edits_applied.join(", ")}</span>`;
   }
-  badgesHtml += `</div>`;
+  badgesHtml += `
+      </div>
+    </div>
+  `;
 
   // Check for ASK_USER clarification response
   if (resp.decision.action === "ASK_USER" && resp.decision.clarifying_questions) {
     row.innerHTML = `
       <div class="message-assistant">
-        ${badgesHtml}
-        <div class="assistant-body">
-          <p>${escapeHtml(resp.content)}</p>
-          <div class="clarify-box">
-            <div class="clarify-title">Select your preferred focus area (0 extra tokens):</div>
-            ${resp.decision.clarifying_questions.map((opt, idx) => `
-              <button class="clarify-option-btn" onclick="submitClarificationChoice('${escapeHtml(opt)}')">
-                ${escapeHtml(opt)}
-              </button>
-            `).join('')}
+        <div class="assistant-response-card">
+          ${badgesHtml}
+          <div class="assistant-text-content">
+            <p>${escapeHtml(resp.content)}</p>
+            <div class="clarification-choices-wrap">
+              <div class="clarification-choices-label">Select preferred focus area (0 extra tokens):</div>
+              <div class="clarification-chips-list">
+                ${resp.decision.clarifying_questions.map((opt) => `
+                  <button class="clarification-chip" onclick="submitClarificationChoice('${escapeHtml(opt)}')">
+                    ${escapeHtml(opt)}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -567,29 +586,57 @@ function renderAssistantResponseWithTypewriter(loadingId, resp) {
   // Create skeleton with streaming container
   const rawText = resp.content || "";
   const contentContainerId = `content-${Date.now()}`;
+  const summaryContainerId = `summary-${Date.now()}`;
+
+  const { mainBody, summarySection } = formatAssistantResponseText(rawText);
 
   row.innerHTML = `
     <div class="message-assistant">
-      ${badgesHtml}
-      <div class="assistant-body" id="${contentContainerId}">
-        <span class="streaming-text"></span><span class="streaming-cursor"></span>
-      </div>
-      <div class="assistant-toolbar">
-        <button class="toolbar-btn" onclick="copyMessageText(this, \`${escapeJsString(rawText)}\`)">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
-          <span>Copy</span>
-        </button>
-        <button class="toolbar-btn" onclick="toggleInspectorPanel()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <span>Inspect Reasoning</span>
-        </button>
-        <span class="toolbar-metrics">${resp.tokens_used} tokens • $${(resp.estimated_cost_usd || 0).toFixed(5)} • ${resp.latency_ms} ms</span>
+      <div class="assistant-response-card">
+        ${badgesHtml}
+        
+        <div class="assistant-text-content" id="${contentContainerId}">
+          <span class="streaming-text"></span><span class="streaming-cursor"></span>
+        </div>
+
+        <div class="truth-summary-card" id="${summaryContainerId}" style="display: none;">
+          <div class="truth-summary-header">
+            <div class="truth-summary-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              <span>Verification & Confidence Summary</span>
+            </div>
+            <span class="truth-summary-badge">Verified</span>
+          </div>
+          <div class="truth-summary-body"></div>
+        </div>
+
+        <div class="assistant-toolbar">
+          <div class="toolbar-actions-left">
+            <button class="toolbar-btn" onclick="copyMessageText(this, \`${escapeJsString(rawText)}\`)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span>Copy</span>
+            </button>
+            <button class="toolbar-btn" onclick="toggleInspectorPanel()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <span>Inspect Reasoning</span>
+            </button>
+          </div>
+          <div class="toolbar-metrics-badge">
+            <span>${resp.tokens_used} tokens</span>
+            <span class="metric-separator">•</span>
+            <span>$${(resp.estimated_cost_usd || 0).toFixed(5)}</span>
+            <span class="metric-separator">•</span>
+            <span>${resp.latency_ms >= 1000 ? (resp.latency_ms / 1000).toFixed(2) + "s" : resp.latency_ms + " ms"}</span>
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -599,9 +646,9 @@ function renderAssistantResponseWithTypewriter(loadingId, resp) {
   const streamTextEl = container.querySelector(".streaming-text");
   const cursorEl = container.querySelector(".streaming-cursor");
 
-  const words = rawText.split(" ");
+  const words = (mainBody || rawText).split(" ");
   let wordIndex = 0;
-  const streamSpeedMs = resp.cached ? 5 : 18; // Faster for cache hits
+  const streamSpeedMs = resp.cached ? 4 : 14;
 
   function streamStep() {
     if (wordIndex < words.length) {
@@ -613,8 +660,20 @@ function renderAssistantResponseWithTypewriter(loadingId, resp) {
     } else {
       // Completed streaming: render full Markdown, code highlight, math
       if (cursorEl) cursorEl.remove();
-      const renderedHtml = window.marked ? marked.parse(rawText) : escapeHtml(rawText);
+      const renderedHtml = window.marked ? marked.parse(mainBody || rawText) : escapeHtml(mainBody || rawText);
       container.innerHTML = renderedHtml;
+
+      // If there was a summary / verification section, render it in the summary box
+      if (summarySection) {
+        const summaryCard = document.getElementById(summaryContainerId);
+        if (summaryCard) {
+          const bodyEl = summaryCard.querySelector(".truth-summary-body");
+          if (bodyEl) {
+            bodyEl.innerHTML = window.marked ? marked.parse(summarySection) : escapeHtml(summarySection);
+          }
+          summaryCard.style.display = "block";
+        }
+      }
 
       // Enhance code blocks with copy buttons
       container.querySelectorAll("pre code").forEach(block => {
@@ -814,7 +873,11 @@ function renderReviewCards(items) {
   if (!items || items.length === 0) {
     container.innerHTML = `
       <div class="empty-state-box">
-        No review items matching this filter.
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--text-muted); margin-bottom: 0.5rem;">
+          <polyline points="9 11 12 14 22 4"></polyline>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+        </svg>
+        <div>No review items matching this filter.</div>
       </div>
     `;
     return;
@@ -822,34 +885,47 @@ function renderReviewCards(items) {
 
   container.innerHTML = items.map(item => {
     const isPending = item.status === "pending";
-    const statusColor = item.status === "approved" ? "var(--color-allow)" : item.status === "rejected" ? "var(--color-block)" : "var(--color-escalate)";
+    const statusPillClass = item.status === "approved" ? "cp-pill-allow" : item.status === "rejected" ? "cp-pill-block" : "cp-pill-escalate";
 
     return `
       <div class="review-item-card" id="rev-card-${item.id}">
         <div class="review-card-top">
           <div class="review-badge-row">
-            <span class="cp-pill cp-pill-escalate">REVIEW ID: ${item.id}</span>
-            <span class="cp-pill" style="background: rgba(255,255,255,0.06); color: ${statusColor};">${item.status.toUpperCase()}</span>
-            <span style="font-size: 0.74rem; color: var(--text-muted); font-family: var(--font-mono);">${new Date(item.created_at).toLocaleString()}</span>
+            <span class="cp-pill ${statusPillClass}">${item.status.toUpperCase()}</span>
+            <span class="review-id-tag">ID: #${item.id}</span>
           </div>
+          <span class="review-timestamp">${new Date(item.created_at).toLocaleString()}</span>
         </div>
 
-        <div class="review-prompt-box">
-          <strong>Prompt:</strong> ${escapeHtml(item.raw_prompt)}
+        <div class="review-field-group">
+          <div class="review-field-label">INPUT PROMPT</div>
+          <div class="review-quote-box">${escapeHtml(item.raw_prompt)}</div>
         </div>
 
-        <div class="review-answer-box">
-          <strong>Candidate Answer:</strong> ${escapeHtml(item.candidate_answer)}
+        <div class="review-field-group">
+          <div class="review-field-label">CANDIDATE MODEL GENERATION</div>
+          <div class="review-quote-box answer-box">${escapeHtml(item.candidate_answer)}</div>
         </div>
 
         ${isPending ? `
           <div class="review-actions-row">
-            <button class="btn-review-act btn-act-reject" onclick="resolveReviewItem('${item.id}', 'reject')">✕ Reject</button>
-            <button class="btn-review-act btn-act-approve" onclick="resolveReviewItem('${item.id}', 'approve')">✓ Approve Answer</button>
+            <button class="btn-review-act btn-act-reject" onclick="resolveReviewItem('${item.id}', 'reject')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              <span>Reject & Block</span>
+            </button>
+            <button class="btn-review-act btn-act-approve" onclick="resolveReviewItem('${item.id}', 'approve')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Approve Answer</span>
+            </button>
           </div>
         ` : `
-          <div style="font-size: 0.76rem; color: var(--text-muted); text-align: right;">
-            Resolved at: ${item.resolved_at ? new Date(item.resolved_at).toLocaleString() : 'N/A'} • Note: ${escapeHtml(item.reviewer_note || 'None')}
+          <div class="review-resolved-meta">
+            ✓ Resolved on ${item.resolved_at ? new Date(item.resolved_at).toLocaleString() : 'N/A'} • Note: ${escapeHtml(item.reviewer_note || 'Resolved by operator')}
           </div>
         `}
       </div>
