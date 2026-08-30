@@ -322,12 +322,15 @@ body {
   font-weight: 500;
   padding: 0.4rem 0.85rem;
   cursor: pointer;
-  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  transition: all 0.18s ease;
 }
 
 .btn-inspector-toggle:hover {
-  border-color: var(--blue-primary);
+  border-color: var(--border-bright);
   color: #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+  transform: translateY(-1px);
 }
 
 .header-status-pill {
@@ -342,6 +345,7 @@ body {
   font-size: 0.7rem;
   font-weight: 600;
   color: var(--color-allow);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .pill-dot {
@@ -362,12 +366,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  transition: all 0.18s ease;
 }
 
 .btn-header-gear:hover {
-  border-color: var(--pink-primary);
+  border-color: var(--border-bright);
   color: #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+  transform: translateY(-1px);
 }
 
 /* ==========================================================================
@@ -420,6 +427,7 @@ body {
   justify-content: center;
   margin-bottom: 1.1rem;
   color: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 .hero-title {
@@ -449,18 +457,17 @@ body {
   border-radius: var(--radius-md);
   padding: 1.1rem 1.25rem;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
 }
 
 .bento-card:hover {
-  background: #151928;
-  border-color: var(--blue-primary);
-}
-
-.bento-card:nth-child(2n):hover {
-  border-color: var(--pink-primary);
+  background: #141828;
+  border-color: #38415c;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.65);
 }
 
 .bento-title {
@@ -502,6 +509,7 @@ body {
   font-size: 0.92rem;
   color: #fff;
   line-height: 1.55;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
 .message-assistant {
@@ -516,6 +524,7 @@ body {
   border-radius: var(--radius-lg);
   padding: 1.25rem 1.5rem;
   position: relative;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
 .assistant-meta-strip {
@@ -563,6 +572,7 @@ body {
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   font-size: 0.88rem;
   color: #fecdd3;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
 /* ==========================================================================
@@ -582,11 +592,13 @@ body {
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-md);
   padding: 0.85rem 1rem 0.75rem;
-  transition: border-color 0.15s ease;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  transition: all 0.2s ease;
 }
 
 .input-dock:focus-within {
-  border-color: var(--blue-primary);
+  border-color: #38415c;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7);
 }
 
 .input-textarea-wrap {
