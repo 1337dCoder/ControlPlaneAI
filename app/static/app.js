@@ -439,7 +439,30 @@ function initChatInput() {
     } catch (err) {
       const loadingEl = document.getElementById(loadingId);
       if (loadingEl) {
-        loadingEl.innerHTML = `<div class="blocked-callout">⚠️ Connection Error: ${err.message}</div>`;
+        const isHttpsMixedContent = window.location.protocol === "https:" && getApiBaseUrl().startsWith("http://");
+        if (isHttpsMixedContent) {
+          loadingEl.innerHTML = `
+            <div class="blocked-callout" style="line-height: 1.6;">
+              <div style="font-weight: 700; margin-bottom: 0.35rem;">🔒 Browser Mixed Content Restriction</div>
+              <div>Your browser is on a secure <code>https://</code> page and blocked the connection to the local <code>http://</code> backend.</div>
+              <div style="margin-top: 0.6rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <a href="http://192.168.1.33:8000" class="btn-topic-new" style="text-decoration: none; display: inline-block;">📱 Open via Local Network (http://192.168.1.33:8000)</a>
+                <a href="http://localhost:8000" class="btn-topic-dismiss" style="text-decoration: none; display: inline-block;">💻 Open localhost:8000</a>
+                <button onclick="promptForBackendUrl()" class="btn-topic-dismiss">⚙️ Change Backend URL</button>
+              </div>
+            </div>
+          `;
+        } else {
+          loadingEl.innerHTML = `
+            <div class="blocked-callout">
+              <div>⚠️ Connection Error: ${escapeHtml(err.message)}</div>
+              <div style="font-size: 0.8rem; margin-top: 0.4rem; color: var(--text-secondary);">Make sure the ControlPlane server is running (<code>uvicorn app.main:app --host 0.0.0.0 --port 8000</code>).</div>
+              <div style="margin-top: 0.5rem;">
+                <button onclick="promptForBackendUrl()" class="btn-topic-dismiss" style="font-size: 0.76rem;">⚙️ Set Backend Gateway URL</button>
+              </div>
+            </div>
+          `;
+        }
       }
     } finally {
       sendBtn.disabled = false;
