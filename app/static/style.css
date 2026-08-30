@@ -1,12 +1,12 @@
 /* ==========================================================================
-   ControlPlane AI — Clean, Centered, Minimalist Dark Interface
-   With Electric Blue & Neon Pink Accents.
+   ControlPlane AI — Clean, Centered, High-Contrast Solid Interface
+   Featuring Solid Colors, Clean Vector Geometry, and Zero Glow Blurs.
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Dark Obsidian Bases */
+  /* Solid Dark Obsidian Bases */
   --bg-base: #090a0f;
   --bg-sidebar: #0b0d14;
   --bg-surface: #10131d;
@@ -14,32 +14,30 @@
   --bg-input: #111420;
   --bg-drawer: #0d0f17;
 
-  /* Borders */
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-medium: rgba(255, 255, 255, 0.14);
-  --border-bright: rgba(255, 255, 255, 0.22);
-  --border-active: rgba(56, 189, 248, 0.45);
+  /* Solid Clean Borders */
+  --border-subtle: #1e2230;
+  --border-medium: #282e42;
+  --border-bright: #3d4663;
+  --border-active: #38bdf8;
 
-  /* Electric Blue & Neon Pink Accents */
+  /* Solid Vibrant Blue & Pink */
   --blue-primary: #38bdf8;
   --blue-light: #7dd3fc;
-  --blue-soft: rgba(56, 189, 248, 0.12);
-  --blue-glow: rgba(56, 189, 248, 0.25);
+  --blue-solid: #0284c7;
 
   --pink-primary: #ec4899;
   --pink-light: #f472b6;
-  --pink-soft: rgba(236, 72, 153, 0.12);
-  --pink-glow: rgba(236, 72, 153, 0.25);
+  --pink-solid: #db2777;
 
   /* Decision States */
   --color-allow: #10b981;
-  --color-allow-bg: rgba(16, 185, 129, 0.12);
+  --color-allow-bg: #064e3b;
   --color-edit: #f59e0b;
-  --color-edit-bg: rgba(245, 158, 11, 0.12);
+  --color-edit-bg: #78350f;
   --color-escalate: #ec4899;
-  --color-escalate-bg: rgba(236, 72, 153, 0.12);
+  --color-escalate-bg: #831843;
   --color-block: #f43f5e;
-  --color-block-bg: rgba(244, 63, 94, 0.12);
+  --color-block-bg: #881337;
 
   /* Typography */
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -50,9 +48,9 @@
   --text-muted: #64748b;
 
   --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
   --radius-full: 9999px;
 }
 
@@ -112,21 +110,16 @@ body {
   gap: 0.65rem;
 }
 
-.cp-logo-box {
-  width: 28px;
-  height: 28px;
-  background: #111420;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+.cp-logo-icon {
+  width: 32px;
+  height: 32px;
+  background: #151928;
+  border: 1px solid var(--border-medium);
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: var(--blue-light);
-  letter-spacing: 0.05em;
-  box-shadow: 0 0 10px -2px var(--blue-glow);
+  color: #ffffff;
 }
 
 .brand-title {
@@ -150,12 +143,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease;
 }
 
 .btn-new-chat:hover {
   background: #e2e8f0;
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.25);
 }
 
 .sidebar-nav {
@@ -202,19 +194,18 @@ body {
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: #141824;
   color: var(--text-primary);
 }
 
 .nav-item.active {
-  background: rgba(56, 189, 248, 0.08);
-  border: 1px solid var(--border-active);
+  background: #151928;
+  border: 1px solid var(--blue-primary);
   color: #ffffff;
-  box-shadow: 0 0 15px -3px rgba(56, 189, 248, 0.15);
 }
 
 .nav-item.active .nav-num {
-  color: var(--pink-light);
+  color: var(--blue-primary);
 }
 
 .badge-count {
@@ -303,7 +294,7 @@ body {
 }
 
 .header-sidebar-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: #161b2a;
   color: #fff;
 }
 
@@ -337,7 +328,6 @@ body {
 .btn-inspector-toggle:hover {
   border-color: var(--blue-primary);
   color: #fff;
-  box-shadow: 0 0 14px -3px var(--blue-glow);
 }
 
 .header-status-pill {
@@ -345,7 +335,7 @@ body {
   align-items: center;
   gap: 0.45rem;
   background: var(--bg-surface);
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  border: 1px solid #059669;
   border-radius: var(--radius-sm);
   padding: 0.4rem 0.75rem;
   font-family: var(--font-mono);
@@ -355,8 +345,11 @@ body {
 }
 
 .pill-dot {
-  color: var(--color-allow);
-  font-size: 0.8rem;
+  width: 6px;
+  height: 6px;
+  background: var(--color-allow);
+  border-radius: 50%;
+  display: inline-block;
 }
 
 .btn-header-gear {
@@ -375,7 +368,6 @@ body {
 .btn-header-gear:hover {
   border-color: var(--pink-primary);
   color: #fff;
-  box-shadow: 0 0 14px -3px var(--pink-glow);
 }
 
 /* ==========================================================================
@@ -418,22 +410,16 @@ body {
 }
 
 .hero-avatar-glow {
-  width: 58px;
-  height: 58px;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.18) 0%, rgba(236, 72, 153, 0.18) 100%);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  width: 64px;
+  height: 64px;
+  background: #141828;
+  border: 1px solid #2a3148;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 1.1rem;
-  box-shadow: 0 0 25px -4px var(--blue-glow), 0 0 25px -4px var(--pink-glow);
-  animation: pulseGlow 4s ease-in-out infinite alternate;
-}
-
-@keyframes pulseGlow {
-  0% { transform: scale(1); filter: brightness(1); }
-  100% { transform: scale(1.05); filter: brightness(1.2); }
+  color: #ffffff;
 }
 
 .hero-title {
@@ -463,15 +449,18 @@ body {
   border-radius: var(--radius-md);
   padding: 1.1rem 1.25rem;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: border-color 0.15s ease, background 0.15s ease;
   display: flex;
   flex-direction: column;
 }
 
 .bento-card:hover {
+  background: #151928;
   border-color: var(--blue-primary);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px -5px var(--blue-glow), 0 6px 25px -5px var(--pink-glow);
+}
+
+.bento-card:nth-child(2n):hover {
+  border-color: var(--pink-primary);
 }
 
 .bento-title {
@@ -508,7 +497,7 @@ body {
   max-width: 80%;
   background: #171b28;
   border: 1px solid var(--border-medium);
-  border-radius: 14px 14px 2px 14px;
+  border-radius: 12px 12px 2px 12px;
   padding: 0.85rem 1.15rem;
   font-size: 0.92rem;
   color: #fff;
@@ -555,11 +544,11 @@ body {
   text-transform: uppercase;
 }
 
-.cp-pill-allow { background: var(--color-allow-bg); color: var(--color-allow); border: 1px solid rgba(16, 185, 129, 0.3); }
-.cp-pill-edit { background: var(--color-edit-bg); color: var(--color-edit); border: 1px solid rgba(245, 158, 11, 0.3); }
-.cp-pill-escalate { background: var(--color-escalate-bg); color: var(--color-escalate); border: 1px solid rgba(236, 72, 153, 0.3); }
-.cp-pill-block { background: var(--color-block-bg); color: var(--color-block); border: 1px solid rgba(244, 63, 94, 0.3); }
-.cp-pill-tier { background: rgba(56, 189, 248, 0.1); color: var(--blue-light); border: 1px solid rgba(56, 189, 248, 0.25); }
+.cp-pill-allow { background: #064e3b; color: #34d399; border: 1px solid #059669; }
+.cp-pill-edit { background: #78350f; color: #fbbf24; border: 1px solid #d97706; }
+.cp-pill-escalate { background: #831843; color: #f472b6; border: 1px solid #db2777; }
+.cp-pill-block { background: #881337; color: #fda4af; border: 1px solid #e11d48; }
+.cp-pill-tier { background: #0c4a6e; color: #7dd3fc; border: 1px solid #0284c7; }
 
 .assistant-text-content {
   font-size: 0.94rem;
@@ -568,7 +557,7 @@ body {
 }
 
 .blocked-callout {
-  background: rgba(244, 63, 94, 0.1);
+  background: #2a111a;
   border-left: 3px solid var(--color-block);
   padding: 0.85rem 1rem;
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
@@ -593,13 +582,11 @@ body {
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-md);
   padding: 0.85rem 1rem 0.75rem;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-  transition: all 0.2s ease;
+  transition: border-color 0.15s ease;
 }
 
 .input-dock:focus-within {
   border-color: var(--blue-primary);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 22px -4px var(--blue-glow);
 }
 
 .input-textarea-wrap {
@@ -630,7 +617,7 @@ body {
   justify-content: space-between;
   margin-top: 0.65rem;
   padding-top: 0.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .input-tools-left {
@@ -679,15 +666,14 @@ body {
 }
 
 .truthprompt-indicator-pill {
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(236, 72, 153, 0.12) 100%);
-  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: #0c4a6e;
+  border: 1px solid #0284c7;
   border-radius: var(--radius-xs);
   padding: 0.25rem 0.55rem;
   font-family: var(--font-mono);
   font-size: 0.68rem;
   font-weight: 700;
-  color: var(--blue-light);
-  box-shadow: 0 0 10px -2px var(--blue-glow);
+  color: #7dd3fc;
 }
 
 .btn-send-dock {
@@ -701,12 +687,11 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease;
 }
 
 .btn-send-dock:hover:not(:disabled) {
   background: #e2e8f0;
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
 }
 
 .btn-send-dock:disabled {
@@ -725,7 +710,6 @@ body {
   height: 100vh;
   background: var(--bg-drawer);
   border-left: 1px solid var(--border-medium);
-  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.7);
   z-index: 100;
   display: flex;
   flex-direction: column;
@@ -789,7 +773,7 @@ body {
 .insp-tab-btn.active {
   color: var(--blue-light);
   border-bottom-color: var(--blue-primary);
-  background: rgba(56, 189, 248, 0.05);
+  background: #101524;
 }
 
 .inspector-body {
@@ -830,7 +814,7 @@ body {
 }
 
 .custom-table tr:hover td {
-  background: rgba(255, 255, 255, 0.02);
+  background: #141824;
 }
 
 /* Responsive adjustments */
