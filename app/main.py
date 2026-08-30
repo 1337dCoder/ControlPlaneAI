@@ -116,11 +116,22 @@ from fastapi.responses import FileResponse
 
 STATIC_DIR = Path(__file__).parent / "static"
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(
     title="ControlPlane Wrapper API",
     description="Deterministic Prevention & Detection Proxy for LLMs",
     version="0.1.0",
     lifespan=lifespan
+)
+
+# Enable CORS for cross-origin requests (Firebase Hosting, mobile, web)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.middleware("http")

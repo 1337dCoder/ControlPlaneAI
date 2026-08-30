@@ -9,6 +9,27 @@ let pendingTopicPrompt = "";
 let lastResponseData = null;
 let activeInspectorTab = "summary";
 
+function getApiBaseUrl() {
+  const custom = localStorage.getItem("cp_backend_url");
+  if (custom) return custom.replace(/\/$/, "");
+  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.")) {
+    return "";
+  }
+  // Default to local network IP when on Firebase Hosting if not specified
+  return "http://192.168.1.33:8000";
+}
+
+function promptForBackendUrl() {
+  const current = localStorage.getItem("cp_backend_url") || "http://192.168.1.33:8000";
+  const url = prompt("Enter ControlPlane Backend Proxy URL (e.g. http://192.168.1.33:8000 or your Cloud URL):", current);
+  if (url !== null) {
+    localStorage.setItem("cp_backend_url", url.trim());
+    fetchHealth();
+    fetchAuditLogs();
+    fetchReviewQueue();
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initHeroGreeting();
   initChatInput();
@@ -397,7 +418,7 @@ function initChatInput() {
     sendBtn.disabled = true;
 
     try {
-      const res = await fetch("/v1/chat", {
+      const res = await fetch(`${getApiBaseUrl()}/v1/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -643,7 +664,7 @@ function scrollToBottom() {
    ========================================================================== */
 async function fetchAuditLogs() {
   try {
-    const res = await fetch("/audit?limit=25");
+    const res = await fetch(`${getApiBaseUrl()}/audit?limit=25`);
     if (!res.ok) return;
     const logs = await res.json();
 
@@ -703,7 +724,7 @@ let reviewItemsCache = [];
 
 async function fetchReviewQueue() {
   try {
-    const res = await fetch("/v1/reviews");
+    const res = await fetch(`${getApiBaseUrl()}/v1/reviews`);
     if (!res.ok) return;
     const data = await res.json();
     reviewItemsCache = data.reviews || [];
@@ -784,7 +805,7 @@ function renderReviewCards(items) {
 
 async function resolveReviewItem(reviewId, action) {
   try {
-    const res = await fetch(`/v1/review/${reviewId}`, {
+    const res = await fetch(`${getApiBaseUrl()}/v1/review/${reviewId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -803,7 +824,7 @@ async function resolveReviewItem(reviewId, action) {
 
 async function fetchHealth() {
   try {
-    const res = await fetch("/health");
+    const res = await fetch(`${getApiBaseUrl()}/health`);
     if (res.ok) {
       const data = await res.json();
       const statusText = document.getElementById("header-status-text");
