@@ -1,30 +1,227 @@
+/**
+ * ControlPlane AI — Claude-Inspired Interactive Client Logic
+ * Features: Typewriter streaming animation, Live Reasoning Inspector Drawer, 
+ * Markdown/KaTeX rendering, Review Queue resolution, Topic Switch Auto-Offer.
+ */
+
+let conversationPrompts = [];
+let pendingTopicPrompt = "";
+let lastResponseData = null;
+let activeInspectorTab = "summary";
+
 document.addEventListener("DOMContentLoaded", () => {
+  initHeroGreeting();
   initChatInput();
   initSidebar();
   fetchHealth();
   fetchAuditLogs();
   fetchReviewQueue();
 
-  // Hidden Developer Mode Toggle
-  const proxyTitle = document.getElementById("proxy-title");
-  if (proxyTitle) {
-    let clicks = 0;
-    proxyTitle.addEventListener("click", () => {
-      clicks++;
-      if (clicks >= 2) {
-        document.body.classList.toggle("dev-mode");
-        clicks = 0;
-      }
-      setTimeout(() => clicks = 0, 1000);
+  // Configure Marked for code highlighting
+  if (window.marked) {
+    marked.setOptions({
+      highlight: function (code, lang) {
+        if (window.hljs && lang && hljs.getLanguage(lang)) {
+          return hljs.highlight(code, { language: lang }).value;
+        }
+        return code;
+      },
+      breaks: true,
+      gfm: true
     });
   }
 });
 
+function initHeroGreeting() {
+  const greetingEl = document.getElementById("hero-greeting");
+  if (!greetingEl) return;
+  const hour = new Date().getHours();
+  let text = "Good evening";
+  if (hour >= 5 && hour < 12) text = "Good morning";
+  else if (hour >= 12 && hour < 17) text = "Good afternoon";
+  else if (hour >= 17 && hour < 22) text = "Good evening";
+  else text = "Good night";
+  greetingEl.innerText = text;
+}
+
+function toggleSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  if (sidebar) {
+    sidebar.classList.toggle("collapsed");
+  }
+}
+
+function toggleInspectorPanel(data = null) {
+  const drawer = document.getElementById("inspector-drawer");
+  const toggleBtn = document.getElementById("btn-inspector-toggle");
+  if (!drawer) return;
+
+  if (data) {
+    lastResponseData = data;
+    renderInspectorContent();
+    drawer.classList.add("open");
+    if (toggleBtn) toggleBtn.classList.add("active");
+    return;
+  }
+
+  drawer.classList.toggle("open");
+  if (toggleBtn) toggleBtn.classList.toggle("active", drawer.classList.contains("open"));
+  if (drawer.classList.contains("open") && lastResponseData) {
+    renderInspectorContent();
+  }
+}
+
+function switchInspectorTab(tabName, btn) {
+  activeInspectorTab = tabName;
+  document.querySelectorAll(".insp-tab-btn").forEach(b => b.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+  renderInspectorContent();
+}
+
+function renderInspectorContent() {
+  const body = document.getElementById("inspector-body");
+  if (!body) return;
+
+  if (!lastResponseData) {
+    body.innerHTML = `
+      <div class="inspector-empty">
+        <p>Send a prompt to inspect live 4-question intake, TruthPrompt envelope, model telemetry, and deterministic decision rules.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const d = lastResponseData;
+
+  if (activeInspectorTab === "summary") {
+    body.innerHTML = `
+      <div class="insp-card">
+        <div class="insp-card-title">
+          <span>Decision Overview</span>
+          <span class="cp-pill cp-pill-${d.decision.action.toLowerCase()}">${d.decision.action}</span>
+        </div>
+        <div class="insp-kv-row">
+          <span class="insp-key">Confidence State</span>
+          <span class="insp-val" style="color: var(--pink-light);">${d.confidence.state}</span>
+        </div>
+        <div class="insp-kv-row">
+          <span class="insp-key">Model / Tier</span>
+          <span class="insp-val">${d.tier.toUpperCase()} (${d.model_used})</span>
+        </div>
+        <div class="insp-kv-row">
+          <span class="insp-key">Tokens Consumed</span>
+          <span class="insp-val">${d.tokens_used} tokens</span>
+        </div>
+        <div class="insp-kv-row">
+          <span class="insp-key">Estimated Cost</span>
+          <span class="insp-val">$${(d.estimated_cost_usd || 0).toFixed(6)} USD</span>
+        </div>
+        <div class="insp-kv-row">
+          <span class="insp-key">Pipeline Latency</span>
+          <span class="insp-val">${d.latency_ms} ms</span>
+        </div>
+        <div class="insp-kv-row">
+          <span class="insp-key">Cache Status</span>
+          <span class="insp-val">${d.cached ? "⚡ DEDUP HIT (0 tokens)" : "Generation Miss"}</span>
+        </div>
+      </div>
+
+      <div class="insp-card">
+        <div class="insp-card-title">Deterministic Reasons</div>
+        <ul style="margin-left: 1.25rem; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6;">
+          ${(d.decision.reasons || []).map(r => `<li>${escapeHtml(r)}</li>`).join("")}
+        </ul>
+      </div>
+    `;
+  } else if (activeInspectorTab === "stage1") {
+    body.innerHTML = `
+      <div class="insp-card">
+        <div class="insp-card-title">4-Question Structured Intake</div>
+        <div class="insp-kv-row">
+          <span class="insp-key">Task</span>
+          <span class="insp-val">${escapeHtml(d.intake.task || "N/A")}</span>
+        </div>
+        <div class="insp-kv-row">
+          <span class="insp-key">Context</span>
+          <span class="insp-val">${escapeHtml(d.intake.context || "Not specified")}</span>
+        </div>
+        <div class="insp-kv-row">
+          <span class="insp-key">Constraints</span>
+          <span class="insp-val">${escapeHtml(d.intake.constraints || "Strict facts")}</span>
+        </div>
+        <div class="insp-kv-row">
+          <span class="insp-key">Expected Output</span>
+          <span class="insp-val">${escapeHtml(d.intake.expected_output || "Text")}</span>
+        </div>
+        <div class="insp-kv-row">
+          <span class="insp-key">Extraction Source</span>
+          <span class="insp-val" style="color: var(--blue-light);">${d.intake.source}</span>
+        </div>
+      </div>
+
+      <div class="insp-card">
+        <div class="insp-card-title">TruthPrompt Envelope</div>
+        <div class="insp-kv-row">
+          <span class="insp-key">Version</span>
+          <span class="insp-val">truth_prompt_v1</span>
+        </div>
+        <div class="insp-kv-row">
+          <span class="insp-key">Decomposition</span>
+          <span class="insp-val">Fact / Assumption / Inference Separation</span>
+        </div>
+        <div class="insp-kv-row">
+          <span class="insp-key">Routing Rule</span>
+          <span class="insp-val">${d.tier === 'capable' ? 'Complex proof / reasoning keywords triggered capable tier' : 'Default cheap tier applied'}</span>
+        </div>
+      </div>
+    `;
+  } else if (activeInspectorTab === "stage2") {
+    body.innerHTML = `
+      <div class="insp-card">
+        <div class="insp-card-title">Detection Findings</div>
+        <div class="insp-kv-row">
+          <span class="insp-key">Performance / Entropy Score</span>
+          <span class="insp-val">${(d.findings.performance_score || d.findings.self_rated_confidence || 1.0).toFixed(2)}</span>
+        </div>
+        <div class="insp-kv-row">
+          <span class="insp-key">PII Entities Detected</span>
+          <span class="insp-val" style="color: ${d.findings.pii_found && d.findings.pii_found.length ? 'var(--pink-light)' : 'var(--text-muted)'};">
+            ${d.findings.pii_found && d.findings.pii_found.length ? d.findings.pii_found.join(', ') : 'None (Clean)'}
+          </span>
+        </div>
+        <div class="insp-kv-row">
+          <span class="insp-key">Policy Rule Violations</span>
+          <span class="insp-val" style="color: ${d.findings.policy_hits && d.findings.policy_hits.length ? 'var(--color-block)' : 'var(--text-muted)'};">
+            ${d.findings.policy_hits && d.findings.policy_hits.length ? d.findings.policy_hits.join(', ') : 'None'}
+          </span>
+        </div>
+        <div class="insp-kv-row">
+          <span class="insp-key">Spend Anomaly Alarm</span>
+          <span class="insp-val">${d.findings.spend_anomaly ? '🚨 ANOMALY FLAGGED' : 'Normal Rate'}</span>
+        </div>
+      </div>
+
+      <div class="insp-card">
+        <div class="insp-card-title">Applied In-Memory Edits</div>
+        <div style="font-size: 0.82rem; color: var(--text-secondary);">
+          ${d.decision.edits_applied && d.decision.edits_applied.length ? 
+            `<ul style="margin-left: 1.25rem;">${d.decision.edits_applied.map(e => `<li><code>${e}</code></li>`).join('')}</ul>` : 
+            'No modifications required.'}
+        </div>
+      </div>
+    `;
+  } else if (activeInspectorTab === "json") {
+    body.innerHTML = `
+      <pre class="insp-json-pre">${escapeHtml(JSON.stringify(d, null, 2))}</pre>
+    `;
+  }
+}
+
 const STARTER_PROMPTS = {
   normal: "Explain the time complexity of quicksort in markdown with best, average, and worst cases.",
   dedup: "Explain the time complexity of quicksort in markdown with best, average, and worst cases.",
-  pii: "My email is test@company.internal and API key is sk-1234567890abcdef1234567890abcdef. Please save my credentials.",
-  proof: "Provide a formal step-by-step mathematical proof of the convergence of gradient descent with Lipschitz continuous gradients."
+  pii: "My email is test@company.internal and SSN is 000-12-3456 and API key is sk-1234567890abcdef1234567890abcdef. Please assist.",
+  proof: "Provide a step-by-step mathematical proof of the convergence of gradient descent with Lipschitz continuous gradients."
 };
 
 function useStarterPrompt(key) {
@@ -35,9 +232,6 @@ function useStarterPrompt(key) {
     autoResizeTextarea(promptInput);
   }
 }
-
-let conversationPrompts = [];
-let pendingTopicPrompt = "";
 
 function checkTopicShift(newPrompt) {
   if (conversationPrompts.length === 0) return false;
@@ -68,7 +262,6 @@ function checkTopicShift(newPrompt) {
     }
     const union = new Set([...setA, ...setB]).size;
     const similarity = union > 0 ? intersection / union : 1;
-    // If less than 15% keyword overlap, a topic shift occurred
     return similarity < 0.15;
   }
   return false;
@@ -77,46 +270,40 @@ function checkTopicShift(newPrompt) {
 function showTopicOffer(newPrompt) {
   pendingTopicPrompt = newPrompt;
   const popup = document.getElementById("topic-switch-popup");
-  if (popup) {
-    popup.style.display = "block";
-  }
-}
-
-function executePrompt(promptText) {
-  const textarea = document.getElementById("user-prompt");
-  const form = document.getElementById("chat-form");
-  if (textarea && form) {
-    textarea.value = promptText;
-    // Trigger submit directly
-    form.dispatchEvent(new Event("submit", { cancelable: true }));
-  }
+  if (popup) popup.style.display = "block";
 }
 
 function dismissTopicOffer() {
   const popup = document.getElementById("topic-switch-popup");
-  if (popup) {
-    popup.style.display = "none";
-  }
+  if (popup) popup.style.display = "none";
   if (pendingTopicPrompt) {
-    const promptToSend = pendingTopicPrompt;
+    const p = pendingTopicPrompt;
     pendingTopicPrompt = "";
-    conversationPrompts.push(promptToSend);
-    executePrompt(promptToSend);
+    conversationPrompts.push(p);
+    executePrompt(p);
   }
 }
 
 function acceptNewChatOffer() {
-  const promptToSend = pendingTopicPrompt;
+  const p = pendingTopicPrompt;
   pendingTopicPrompt = "";
   const popup = document.getElementById("topic-switch-popup");
   if (popup) popup.style.display = "none";
-  
   resetToNewChat();
-  if (promptToSend) {
+  if (p) {
     setTimeout(() => {
-      conversationPrompts.push(promptToSend);
-      executePrompt(promptToSend);
+      conversationPrompts.push(p);
+      executePrompt(p);
     }, 100);
+  }
+}
+
+function executePrompt(text) {
+  const textarea = document.getElementById("user-prompt");
+  const form = document.getElementById("chat-form");
+  if (textarea && form) {
+    textarea.value = text;
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
   }
 }
 
@@ -127,8 +314,11 @@ function resetToNewChat() {
   const messagesList = document.getElementById("messages-list");
   messagesList.innerHTML = "";
   document.getElementById("welcome-hero").style.display = "flex";
-  document.getElementById("user-prompt").value = "";
-  document.getElementById("user-prompt").focus();
+  const textarea = document.getElementById("user-prompt");
+  textarea.value = "";
+  textarea.focus();
+  lastResponseData = null;
+  renderInspectorContent();
 }
 
 function switchView(viewName) {
@@ -188,7 +378,6 @@ function initChatInput() {
     const prompt = textarea.value.trim();
     if (!prompt) return;
 
-    // Check for topic switch
     if (checkTopicShift(prompt)) {
       showTopicOffer(prompt);
       return;
@@ -197,30 +386,25 @@ function initChatInput() {
     conversationPrompts.push(prompt);
     const modelOverride = document.getElementById("tier-select").value || null;
 
-    // Hide hero
     document.getElementById("welcome-hero").style.display = "none";
 
-    // Append User Message Bubble
     appendUserMessage(prompt);
     textarea.value = "";
     autoResizeTextarea(textarea);
 
-    // Append Loading Assistant Card
     const loadingId = appendLoadingAssistant();
     const sendBtn = document.getElementById("btn-send");
     sendBtn.disabled = true;
 
     try {
-      const payload = {
-        prompt: prompt,
-        user_id: "demo_user",
-        model_override: modelOverride
-      };
-
       const res = await fetch("/v1/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          prompt: prompt,
+          user_id: "claude_user",
+          model_override: modelOverride
+        })
       });
 
       if (!res.ok) {
@@ -228,21 +412,16 @@ function initChatInput() {
       }
 
       const data = await res.json();
-      replaceLoadingWithResponse(loadingId, data);
+      lastResponseData = data;
+      renderAssistantResponseWithTypewriter(loadingId, data);
       fetchAuditLogs();
     } catch (err) {
       const loadingEl = document.getElementById(loadingId);
       if (loadingEl) {
-        loadingEl.innerHTML = `<div class="blocked-callout">⚠️ Error: ${err.message}</div>`;
+        loadingEl.innerHTML = `<div class="blocked-callout">⚠️ Connection Error: ${err.message}</div>`;
       }
     } finally {
       sendBtn.disabled = false;
-      sendBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="22" y1="2" x2="11" y2="13"></line>
-          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-        </svg>
-      `;
       textarea.focus();
     }
   });
@@ -252,9 +431,7 @@ function appendUserMessage(text) {
   const list = document.getElementById("messages-list");
   const row = document.createElement("div");
   row.className = "message-row";
-  row.innerHTML = `
-    <div class="message-user">${escapeHtml(text)}</div>
-  `;
+  row.innerHTML = `<div class="message-user">${escapeHtml(text)}</div>`;
   list.appendChild(row);
   scrollToBottom();
 }
@@ -267,9 +444,9 @@ function appendLoadingAssistant() {
   row.id = id;
   row.innerHTML = `
     <div class="message-assistant">
-      <div style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-secondary); font-size: 0.88rem;">
+      <div style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-secondary); font-size: 0.88rem; padding: 0.5rem 0;">
         <div class="pill-dot"></div>
-        <span>Evaluating prevention rules, deduplication cache, and model tier...</span>
+        <span>Evaluating prevention rules, truth envelope, and tiered router...</span>
       </div>
     </div>
   `;
@@ -278,165 +455,195 @@ function appendLoadingAssistant() {
   return id;
 }
 
-function replaceLoadingWithResponse(loadingId, resp) {
+/**
+ * Renders assistant response with smooth Claude-style typewriter streaming animation
+ */
+function renderAssistantResponseWithTypewriter(loadingId, resp) {
   const row = document.getElementById(loadingId);
   if (!row) return;
 
   const actionClass = resp.decision.action.toLowerCase();
-  const confClass = resp.confidence.state.toLowerCase();
   const score = resp.findings.performance_score || resp.findings.self_rated_confidence || 1.0;
 
-  // Badges Header
+  // Header badges
   let badgesHtml = `
-    <span class="cp-pill cp-pill-${actionClass}">DECISION: ${resp.decision.action}</span>
-    <span class="cp-pill cp-pill-tier">${resp.tier.toUpperCase()} (${resp.model_used})</span>
-    <span class="cp-pill" style="color: var(--pink-light); background: var(--pink-soft);">CONFIDENCE: ${resp.confidence.state} (${(score * 100).toFixed(0)}%)</span>
+    <div class="assistant-header-pillbox">
+      <span class="cp-pill cp-pill-${actionClass}">DECISION: ${resp.decision.action}</span>
+      <span class="cp-pill cp-pill-tier">${resp.tier.toUpperCase()} (${resp.model_used})</span>
+      <span class="cp-pill" style="color: var(--pink-light); background: var(--pink-soft);">CONFIDENCE: ${resp.confidence.state} (${(score * 100).toFixed(0)}%)</span>
   `;
-
   if (resp.cached) {
-    badgesHtml += `<span class="cp-pill cp-pill-cache">DEDUP CACHE HIT (0 Tokens)</span>`;
+    badgesHtml += `<span class="cp-pill cp-pill-cache">⚡ DEDUP HIT (0 Tokens)</span>`;
   }
   if (resp.decision.edits_applied && resp.decision.edits_applied.length > 0) {
     badgesHtml += `<span class="cp-pill cp-pill-edit">EDITS: ${resp.decision.edits_applied.join(", ")}</span>`;
   }
-  if (resp.decision.review_id) {
-    badgesHtml += `<span class="cp-pill cp-pill-escalate">REVIEW QUEUED: ${resp.decision.review_id}</span>`;
-  }
+  badgesHtml += `</div>`;
 
-  // Warning Banner or Block Notice
-  let calloutHtml = "";
-  if (resp.decision.action === "BLOCK") {
-    calloutHtml = `<div class="blocked-callout">${escapeHtml(resp.decision.reasons.join("; "))}</div>`;
-  } else if (resp.decision.warning_banner) {
-    calloutHtml = `<div class="warning-callout">${escapeHtml(resp.decision.warning_banner)}</div>`;
-  }
-
-  // Response Text Content or Clarification Form (4 Quick Options)
-  let contentHtml = "";
-  if (resp.decision.action === "ASK_USER" && resp.decision.clarifying_questions && resp.decision.clarifying_questions.length > 0) {
-    const icons = ['📖', '🔬', '💡', '💻'];
-    const qHtml = resp.decision.clarifying_questions.map((opt, i) => `
-      <button class="clarification-option-btn" onclick="selectClarificationOption(this, '${escapeHtml(resp.intake.task)}', '${escapeHtml(opt)}')">
-        <span class="option-icon">${icons[i % icons.length]}</span>
-        <span class="option-text">${escapeHtml(opt)}</span>
-        <span class="option-arrow">➔</span>
-      </button>
-    `).join("");
-    
-    contentHtml = `
-      <div class="assistant-prose">${renderMarkdown(resp.content || "Please choose your preferred answer focus:")}</div>
-      <div class="clarification-options-grid">
-        ${qHtml}
+  // Check for ASK_USER clarification response
+  if (resp.decision.action === "ASK_USER" && resp.decision.clarifying_questions) {
+    row.innerHTML = `
+      <div class="message-assistant">
+        ${badgesHtml}
+        <div class="assistant-body">
+          <p>${escapeHtml(resp.content)}</p>
+          <div class="clarify-box">
+            <div class="clarify-title">Select your preferred focus area (0 extra tokens):</div>
+            ${resp.decision.clarifying_questions.map((opt, idx) => `
+              <button class="clarify-option-btn" onclick="submitClarificationChoice('${escapeHtml(opt)}')">
+                ${escapeHtml(opt)}
+              </button>
+            `).join('')}
+          </div>
+        </div>
       </div>
     `;
-  } else {
-    contentHtml = `<div class="assistant-prose">${renderMarkdown(resp.content || "")}</div>`;
+    scrollToBottom();
+    return;
   }
 
-  // Collapsible Inspection Drawer
-  const drawerId = `drawer-${Date.now()}`;
-  const inspectionHtml = `
-    <div class="pipeline-drawer" id="${drawerId}">
-      <button class="pipeline-drawer-toggle" onclick="toggleDrawer('${drawerId}')">
-        <span>ControlPlane Inspection Pipeline Details</span>
-        <span style="font-size: 0.75rem; color: var(--text-muted);">Latency: ${resp.latency_ms}ms • Tokens: ${resp.tokens_used} ▾</span>
-      </button>
-      <div class="pipeline-drawer-content">
-        <div class="drawer-grid">
-          <div class="drawer-col">
-            <h4>1. Stage 1: Prevention</h4>
-            <p><strong>Intake Task:</strong> ${escapeHtml(resp.intake.task || "(Auto-inferred)")}</p>
-            <p><strong>Context/Constraints:</strong> ${escapeHtml(resp.intake.context || "None")} / ${escapeHtml(resp.intake.constraints || "None")}</p>
-            <p><strong>Dedup Status:</strong> ${resp.cached ? 'Hit (0 token spend)' : 'Miss (Fresh execution)'}</p>
-          </div>
-          <div class="drawer-col">
-            <h4>2. Router & Provider</h4>
-            <p><strong>Tier Selected:</strong> ${resp.tier} (via deterministic rule)</p>
-            <p><strong>Model:</strong> <code>${resp.model_used}</code></p>
-            <p><strong>Est. Cost:</strong> $${resp.estimated_cost_usd} USD</p>
-          </div>
-          <div class="drawer-col">
-            <h4>3. Stage 2: Detection</h4>
-            <p><strong>Statistical Certainty:</strong> ${(score * 100).toFixed(1)}%</p>
-            <p><strong>PII Detected:</strong> ${resp.findings.pii_found.length > 0 ? resp.findings.pii_found.join(", ") : 'None'}</p>
-            <p><strong>Policy Triggers:</strong> ${resp.findings.policy_hits.length > 0 ? resp.findings.policy_hits.join(", ") : 'None'}</p>
-          </div>
-        </div>
-        ${resp.final_system_prompt ? `
-        <div class="drawer-prompts" style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
-          <h4>4. Final Constructed Prompt (Sent to LLM)</h4>
-          <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 6px; margin-top: 0.5rem;">
-            <p style="margin-bottom: 0.25rem; color: var(--pink-light); font-size: 0.8rem; font-weight: 600;">SYSTEM PROMPT (TruthPrompt Envelope):</p>
-            <pre style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); white-space: pre-wrap; margin: 0 0 1rem 0;">${escapeHtml(resp.final_system_prompt)}</pre>
-            <p style="margin-bottom: 0.25rem; color: var(--blue-light); font-size: 0.8rem; font-weight: 600;">USER PROMPT:</p>
-            <pre style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); white-space: pre-wrap; margin: 0;">${escapeHtml(resp.final_user_prompt || "")}</pre>
-          </div>
-        </div>
-        ` : ''}
-      </div>
-    </div>
-  `;
+  // Create skeleton with streaming container
+  const rawText = resp.content || "";
+  const contentContainerId = `content-${Date.now()}`;
 
   row.innerHTML = `
     <div class="message-assistant">
-      <div class="cp-meta-header">
-        <div class="cp-badges-row">${badgesHtml}</div>
-        <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">${resp.latency_ms} ms</span>
+      ${badgesHtml}
+      <div class="assistant-body" id="${contentContainerId}">
+        <span class="streaming-text"></span><span class="streaming-cursor"></span>
       </div>
-      ${inspectionHtml}
-      ${calloutHtml}
-      ${contentHtml}
+      <div class="assistant-toolbar">
+        <button class="toolbar-btn" onclick="copyMessageText(this, \`${escapeJsString(rawText)}\`)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span>Copy</span>
+        </button>
+        <button class="toolbar-btn" onclick="toggleInspectorPanel()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span>Inspect Reasoning</span>
+        </button>
+        <span class="toolbar-metrics">${resp.tokens_used} tokens • $${(resp.estimated_cost_usd || 0).toFixed(5)} • ${resp.latency_ms} ms</span>
+      </div>
     </div>
   `;
 
-  // Render LaTeX Math with KaTeX
-  if (window.renderMathInElement) {
-    const proseEl = row.querySelector(".assistant-prose");
-    if (proseEl) {
-      renderMathInElement(proseEl, {
-        delimiters: [
-          { left: "$$", right: "$$", display: true },
-          { left: "$", right: "$", display: false },
-          { left: "\\(", right: "\\)", display: false },
-          { left: "\\[", right: "\\]", display: true }
-        ],
-        throwOnError: false
+  // Start word-by-word streaming animation
+  const container = document.getElementById(contentContainerId);
+  const streamTextEl = container.querySelector(".streaming-text");
+  const cursorEl = container.querySelector(".streaming-cursor");
+
+  const words = rawText.split(" ");
+  let wordIndex = 0;
+  const streamSpeedMs = resp.cached ? 5 : 18; // Faster for cache hits
+
+  function streamStep() {
+    if (wordIndex < words.length) {
+      const chunk = words.slice(0, wordIndex + 1).join(" ");
+      streamTextEl.innerText = chunk;
+      wordIndex++;
+      scrollToBottom();
+      setTimeout(streamStep, streamSpeedMs);
+    } else {
+      // Completed streaming: render full Markdown, code highlight, math
+      if (cursorEl) cursorEl.remove();
+      const renderedHtml = window.marked ? marked.parse(rawText) : escapeHtml(rawText);
+      container.innerHTML = renderedHtml;
+
+      // Enhance code blocks with copy buttons
+      container.querySelectorAll("pre code").forEach(block => {
+        if (window.hljs) hljs.highlightElement(block);
       });
+      addCodeCopyButtons(container);
+
+      // Render math equations if KaTeX is present
+      if (window.renderMathInElement) {
+        renderMathInElement(container, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false }
+          ]
+        });
+      }
+      scrollToBottom();
     }
   }
 
-  scrollToBottom();
+  streamStep();
 }
 
-function toggleDrawer(id) {
-  const drawer = document.getElementById(id);
-  if (drawer) {
-    drawer.classList.toggle("open");
+function submitClarificationChoice(choiceText) {
+  const textarea = document.getElementById("user-prompt");
+  if (textarea) {
+    textarea.value = `Focus on: ${choiceText}`;
+    document.getElementById("btn-send").click();
   }
+}
+
+function addCodeCopyButtons(container) {
+  container.querySelectorAll("pre").forEach(pre => {
+    if (pre.querySelector(".code-block-header")) return;
+    const code = pre.querySelector("code");
+    const lang = code ? (code.className.match(/language-(\w+)/) || [])[1] || "code" : "text";
+
+    const header = document.createElement("div");
+    header.className = "code-block-header";
+    header.innerHTML = `
+      <span>${lang.toUpperCase()}</span>
+      <button class="btn-copy-code" onclick="copyCode(this)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        <span>Copy Code</span>
+      </button>
+    `;
+    pre.parentNode.insertBefore(header, pre);
+  });
+}
+
+function copyCode(btn) {
+  const pre = btn.closest(".code-block-header").nextElementSibling;
+  const code = pre.querySelector("code") ? pre.querySelector("code").innerText : pre.innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.innerHTML = `<span>✓ Copied</span>`;
+    setTimeout(() => {
+      btn.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        <span>Copy Code</span>
+      `;
+    }, 2000);
+  });
+}
+
+function copyMessageText(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = `<span>✓ Copied</span>`;
+    setTimeout(() => btn.innerHTML = orig, 1800);
+  });
 }
 
 function scrollToBottom() {
-  const container = document.querySelector(".chat-stream-container");
-  container.scrollTop = container.scrollHeight;
-}
-
-// Fetch health
-async function fetchHealth() {
-  try {
-    const res = await fetch("/health");
-    if (res.ok) {
-      const data = await res.json();
-      document.getElementById("header-status-text").textContent = `Proxy Active (${data.database})`;
-    }
-  } catch (e) {
-    document.getElementById("header-status-text").textContent = "Proxy Offline";
+  const container = document.getElementById("view-chat");
+  if (container) {
+    container.scrollTop = container.scrollHeight;
   }
 }
 
-// Fetch Audit Traces & Update Sidebar Metrics
+/* ==========================================================================
+   Audit Logs & Metrics Fetcher
+   ========================================================================== */
 async function fetchAuditLogs() {
   try {
-    const res = await fetch("/audit?limit=20");
+    const res = await fetch("/audit?limit=25");
     if (!res.ok) return;
     const logs = await res.json();
 
@@ -444,78 +651,170 @@ async function fetchAuditLogs() {
     if (!tbody) return;
 
     if (!logs || logs.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">No audit records found.</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">No audit logs recorded yet.</td></tr>`;
       return;
     }
 
-    let cacheCount = 0;
-    let total = logs.length;
+    let cacheHits = 0;
     let totalSpend = 0;
 
-    tbody.innerHTML = "";
-    logs.forEach(log => {
-      if (log.cached) cacheCount++;
-      totalSpend += (log.estimated_cost_usd || 0);
+    tbody.innerHTML = logs.map(log => {
+      if (log.cached) cacheHits++;
+      totalSpend += log.estimated_cost_usd || 0;
 
-      const tr = document.createElement("tr");
-      const timeStr = log.timestamp ? log.timestamp.split("T")[1]?.slice(0, 8) || log.timestamp : "--";
-      const action = (log.decision_action || "ALLOW").toLowerCase();
-      
-      tr.innerHTML = `
-        <td style="font-family: var(--font-mono); color: var(--text-muted);">${timeStr}</td>
-        <td style="font-family: var(--font-mono); font-size: 0.78rem;">${log.request_id.slice(0, 8)}...</td>
-        <td><span class="cp-pill cp-pill-${action}">${log.decision_action}</span></td>
-        <td><span class="cp-pill" style="background: rgba(255,255,255,0.05);">${log.confidence_state}</span></td>
-        <td><code>${log.model_name || log.model_tier}</code></td>
-        <td>${log.cached ? '<span style="color: var(--blue-light); font-weight: 600;">HIT (0 tok)</span>' : '<span style="color: var(--text-muted);">MISS</span>'}</td>
-        <td style="font-family: var(--font-mono);">${parseFloat(log.latency_ms || 0).toFixed(1)}ms</td>
-        <td style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(log.raw_prompt || "")}</td>
+      const actClass = (log.decision_action || "ALLOW").toLowerCase();
+      const timeStr = new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      return `
+        <tr>
+          <td style="font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-muted);">${timeStr}</td>
+          <td style="font-family: var(--font-mono); font-size: 0.74rem;">${log.request_id.slice(0, 8)}...</td>
+          <td><span class="cp-pill cp-pill-${actClass}">${log.decision_action}</span></td>
+          <td style="color: var(--pink-light); font-weight: 600;">${log.confidence_state}</td>
+          <td><span class="cp-pill cp-pill-tier">${log.model_tier.toUpperCase()}</span></td>
+          <td>${log.cached ? '<span style="color: var(--blue-light); font-weight: 700;">YES</span>' : '<span style="color: var(--text-muted);">NO</span>'}</td>
+          <td style="font-family: var(--font-mono); font-size: 0.78rem;">${(log.latency_ms || 0).toFixed(1)} ms</td>
+          <td style="max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(log.raw_prompt)}</td>
+        </tr>
       `;
-      tbody.appendChild(tr);
-    });
+    }).join("");
 
-    const cachePercent = total > 0 ? Math.round((cacheCount / total) * 100) : 0;
-    const sideCache = document.getElementById("side-cache-rate");
-    if (sideCache) {
-      sideCache.textContent = `${cachePercent}% (${cacheCount} queries)`;
+    // Update Mini Metrics
+    const cacheRateEl = document.getElementById("side-cache-rate");
+    if (cacheRateEl) {
+      const rate = logs.length > 0 ? ((cacheHits / logs.length) * 100).toFixed(0) : 0;
+      cacheRateEl.innerText = `${rate}% (${cacheHits} hits)`;
     }
 
-    const sideSpend = document.getElementById("side-spend-val");
-    if (sideSpend) {
-      sideSpend.textContent = `$${totalSpend.toFixed(4)} / $10.00`;
+    const spendEl = document.getElementById("side-spend-val");
+    if (spendEl) {
+      spendEl.innerText = `$${totalSpend.toFixed(4)} / $10.00`;
     }
 
   } catch (e) {
-    console.error("Failed to load audit logs", e);
+    console.error("Failed to fetch audit logs:", e);
   }
 }
 
-function renderMarkdown(str) {
-  if (!str) return "";
-  if (typeof marked !== "undefined") {
-    try {
-      marked.setOptions({
-        gfm: true,
-        breaks: true,
-        highlight: function(code, lang) {
-          if (typeof hljs !== "undefined") {
-            const validLanguage = hljs.getLanguage(lang) ? lang : 'plaintext';
-            return hljs.highlight(code, { language: validLanguage }).value;
-          }
-          return code;
-        }
-      });
-      return marked.parse(str);
-    } catch (e) {
-      console.warn("Marked parse error, fallback to escapeHtml", e);
+/* ==========================================================================
+   Review Queue Fetcher & Resolver
+   ========================================================================== */
+let reviewItemsCache = [];
+
+async function fetchReviewQueue() {
+  try {
+    const res = await fetch("/v1/reviews");
+    if (!res.ok) return;
+    const data = await res.json();
+    reviewItemsCache = data.reviews || [];
+
+    const badge = document.getElementById("nav-review-badge");
+    const pendingCount = reviewItemsCache.filter(r => r.status === "pending").length;
+    if (badge) {
+      badge.innerText = pendingCount;
+      badge.style.display = pendingCount > 0 ? "inline-block" : "none";
     }
+
+    renderReviewCards(reviewItemsCache);
+  } catch (e) {
+    console.error("Failed to fetch review queue:", e);
   }
-  return escapeHtml(str);
+}
+
+function filterReviewQueue(status, btn) {
+  document.querySelectorAll(".filter-pill").forEach(p => p.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+
+  if (status === "all") {
+    renderReviewCards(reviewItemsCache);
+  } else {
+    renderReviewCards(reviewItemsCache.filter(r => r.status === status));
+  }
+}
+
+function renderReviewCards(items) {
+  const container = document.getElementById("review-cards-container");
+  if (!container) return;
+
+  if (!items || items.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state-box">
+        No review items matching this filter.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = items.map(item => {
+    const isPending = item.status === "pending";
+    const statusColor = item.status === "approved" ? "var(--color-allow)" : item.status === "rejected" ? "var(--color-block)" : "var(--color-escalate)";
+
+    return `
+      <div class="review-item-card" id="rev-card-${item.id}">
+        <div class="review-card-top">
+          <div class="review-badge-row">
+            <span class="cp-pill cp-pill-escalate">REVIEW ID: ${item.id}</span>
+            <span class="cp-pill" style="background: rgba(255,255,255,0.06); color: ${statusColor};">${item.status.toUpperCase()}</span>
+            <span style="font-size: 0.74rem; color: var(--text-muted); font-family: var(--font-mono);">${new Date(item.created_at).toLocaleString()}</span>
+          </div>
+        </div>
+
+        <div class="review-prompt-box">
+          <strong>Prompt:</strong> ${escapeHtml(item.raw_prompt)}
+        </div>
+
+        <div class="review-answer-box">
+          <strong>Candidate Answer:</strong> ${escapeHtml(item.candidate_answer)}
+        </div>
+
+        ${isPending ? `
+          <div class="review-actions-row">
+            <button class="btn-review-act btn-act-reject" onclick="resolveReviewItem('${item.id}', 'reject')">✕ Reject</button>
+            <button class="btn-review-act btn-act-approve" onclick="resolveReviewItem('${item.id}', 'approve')">✓ Approve Answer</button>
+          </div>
+        ` : `
+          <div style="font-size: 0.76rem; color: var(--text-muted); text-align: right;">
+            Resolved at: ${item.resolved_at ? new Date(item.resolved_at).toLocaleString() : 'N/A'} • Note: ${escapeHtml(item.reviewer_note || 'None')}
+          </div>
+        `}
+      </div>
+    `;
+  }).join("");
+}
+
+async function resolveReviewItem(reviewId, action) {
+  try {
+    const res = await fetch(`/v1/review/${reviewId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: action,
+        note: `Resolved via Web UI (${action})`
+      })
+    });
+
+    if (res.ok) {
+      fetchReviewQueue();
+    }
+  } catch (e) {
+    console.error("Failed to resolve review item:", e);
+  }
+}
+
+async function fetchHealth() {
+  try {
+    const res = await fetch("/health");
+    if (res.ok) {
+      const data = await res.json();
+      const statusText = document.getElementById("header-status-text");
+      if (statusText) statusText.innerText = "Governance Active";
+    }
+  } catch (e) {}
 }
 
 function escapeHtml(str) {
   if (!str) return "";
-  return str
+  return String(str)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -523,164 +822,7 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
-async function selectClarificationOption(btn, originalTask, selectedOption) {
-  const container = btn.closest(".clarification-options-grid");
-  if (container) {
-    container.innerHTML = `<div style="color: var(--blue-light); font-weight: 600; font-size: 0.85rem; padding: 0.5rem 0;">Selected: ${escapeHtml(selectedOption)} — Generating tailored response...</div>`;
-  }
-  
-  const enrichedPrompt = `Original Request: ${originalTask}\n\nSelected Focus / Expected Output: ${selectedOption}`;
-  
-  // Append User Message Bubble
-  appendUserMessage(`Focus: ${selectedOption}`);
-  
-  // Append Loading Assistant Card
-  const loadingId = appendLoadingAssistant();
-  const modelOverride = document.getElementById("tier-select").value || null;
-
-  try {
-    const payload = {
-      prompt: enrichedPrompt,
-      user_id: "demo_user",
-      model_override: modelOverride,
-      metadata: { is_clarification_response: true }
-    };
-
-    const res = await fetch("/v1/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    if (!res.ok) {
-      throw new Error(`API returned HTTP ${res.status}`);
-    }
-
-    const data = await res.json();
-    replaceLoadingWithResponse(loadingId, data);
-    fetchAuditLogs();
-  } catch (err) {
-    const loadingEl = document.getElementById(loadingId);
-    if (loadingEl) {
-      loadingEl.innerHTML = `<div class="blocked-callout">⚠️ Error: ${err.message}</div>`;
-    }
-  }
-}
-
-// --- REVIEW QUEUE DASHBOARD (Day 7) ---
-
-let currentReviewFilter = "all";
-
-async function fetchReviewQueue(status = currentReviewFilter) {
-  currentReviewFilter = status;
-  const container = document.getElementById("review-cards-container");
-  if (!container) return;
-
-  try {
-    const query = status === "all" ? "" : `?status=${status}`;
-    const res = await fetch(`/v1/reviews${query}`);
-    if (!res.ok) throw new Error("Failed to fetch reviews");
-    const data = await res.json();
-    const reviews = data.reviews || [];
-
-    // Update pending badge in sidebar
-    const pendingCount = reviews.filter(r => r.status === "pending").length;
-    const badge = document.getElementById("nav-review-badge");
-    if (badge) {
-      if (pendingCount > 0) {
-        badge.textContent = pendingCount;
-        badge.style.display = "inline-block";
-      } else {
-        badge.style.display = "none";
-      }
-    }
-
-    if (reviews.length === 0) {
-      container.innerHTML = `
-        <div style="text-align: center; color: var(--text-muted); padding: 3rem; background: var(--bg-surface); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
-          No ${status === 'all' ? '' : status} items in the human review queue.
-        </div>
-      `;
-      return;
-    }
-
-    container.innerHTML = reviews.map(r => {
-      const isPending = r.status === "pending";
-      const statusPill = isPending
-        ? `<span class="cp-pill cp-pill-escalate">STATUS: PENDING REVIEW</span>`
-        : `<span class="cp-pill cp-pill-allow">STATUS: ${r.status.toUpperCase()}</span>`;
-
-      return `
-        <div class="review-card" id="card-${r.id}">
-          <div class="review-card-header">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span style="font-weight: 700; color: #fff;">Review ID: ${r.id}</span>
-              ${statusPill}
-            </div>
-            <span style="font-size: 0.75rem;">${formatTime(r.created_at)}</span>
-          </div>
-
-          <div>
-            <div style="font-size: 0.75rem; color: var(--blue-light); font-weight: 600; margin-bottom: 0.35rem;">USER PROMPT</div>
-            <div class="review-prompt-box">${escapeHtml(r.raw_prompt)}</div>
-          </div>
-
-          <div>
-            <div style="font-size: 0.75rem; color: var(--pink-light); font-weight: 600; margin-bottom: 0.35rem;">CANDIDATE ANSWER</div>
-            <div class="review-answer-box">${escapeHtml(r.candidate_answer)}</div>
-          </div>
-
-          <div style="font-size: 0.8rem; color: var(--text-muted);">
-            <strong>Reason:</strong> ${escapeHtml((r.reasons || []).join("; "))}
-          </div>
-
-          ${isPending ? `
-            <div class="review-actions-row">
-              <input type="text" class="review-note-input" id="note-${r.id}" placeholder="Optional reviewer feedback/reason...">
-              <button class="btn-approve" onclick="resolveReview('${r.id}', 'approve', this)">Approve</button>
-              <button class="btn-reject" onclick="resolveReview('${r.id}', 'reject', this)">Reject</button>
-            </div>
-          ` : `
-            <div style="font-size: 0.8rem; color: var(--text-secondary); padding-top: 0.5rem; border-top: 1px solid var(--border-subtle);">
-              <strong>Resolution:</strong> ${r.status.toUpperCase()} ${r.reviewer_note ? `— <em>"${escapeHtml(r.reviewer_note)}"</em>` : ''} 
-              <span style="color: var(--text-muted); font-size: 0.72rem; margin-left: 0.5rem;">(${formatTime(r.resolved_at)})</span>
-            </div>
-          `}
-        </div>
-      `;
-    }).join("");
-
-  } catch (e) {
-    console.error("Failed to load review queue", e);
-  }
-}
-
-function filterReviewQueue(status, btn) {
-  document.querySelectorAll("#view-review .filter-pill").forEach(p => p.classList.remove("active"));
-  if (btn) btn.classList.add("active");
-  fetchReviewQueue(status);
-}
-
-async function resolveReview(reviewId, action, btn) {
-  const row = btn.closest(".review-actions-row");
-  const noteInput = document.getElementById(`note-${reviewId}`);
-  const note = noteInput ? noteInput.value.trim() : "";
-
-  btn.disabled = true;
-  btn.textContent = "...";
-
-  try {
-    const res = await fetch(`/v1/review/${reviewId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: action, note: note })
-    });
-
-    if (!res.ok) throw new Error("Resolution failed");
-    fetchReviewQueue(currentReviewFilter);
-  } catch (e) {
-    alert(`Failed to resolve review: ${e.message}`);
-    btn.disabled = false;
-    btn.textContent = action.charAt(0).toUpperCase() + action.slice(1);
-  }
+function escapeJsString(str) {
+  if (!str) return "";
+  return str.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
 }

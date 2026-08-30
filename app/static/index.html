@@ -6,12 +6,14 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>ControlPlane — Intelligent LLM Proxy & Governance</title>
+  <title>ControlPlane — Deterministic AI Governance & Proxy</title>
+  
+  <!-- Premium Google Fonts (Claude-inspired Serif & Sans) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   
-  <!-- Markdown & Math Libraries -->
+  <!-- Markdown, Code Highlighting & KaTeX Math Libraries -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark-dimmed.min.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -19,72 +21,138 @@
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
-  <link rel="stylesheet" href="/static/style.css?v=5.0">
+  <link rel="stylesheet" href="/static/style.css?v=6.0">
 </head>
 <body>
 
   <div class="app-layout">
     
-    <!-- Left Sidebar -->
-    <aside class="sidebar">
+    <!-- Left Collapsible Sidebar (Claude Style) -->
+    <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <div class="brand-icon">CP</div>
-        <div>
-          <div class="brand-title">ControlPlane</div>
-          <span class="brand-sub">Deterministic AI Wrapper</span>
+        <div class="brand-badge">
+          <div class="brand-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="url(#sparkle-grad)"/>
+              <defs>
+                <linearGradient id="sparkle-grad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#38bdf8"/>
+                  <stop offset="1" stop-color="#ec4899"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div>
+            <div class="brand-title">ControlPlane</div>
+            <span class="brand-sub">Deterministic AI Governance</span>
+          </div>
         </div>
+        <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="9" y1="3" x2="9" y2="21"></line>
+          </svg>
+        </button>
       </div>
 
       <button class="btn-new-chat" onclick="resetToNewChat()">
-        <span>✨</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
         <span>New Conversation</span>
       </button>
 
       <nav class="sidebar-nav">
+        <div class="nav-section-label">PLATFORM</div>
         <div class="nav-item active" data-view="chat" onclick="switchView('chat')">
-          <span>💬</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
           <span>Chat Playground</span>
         </div>
         <div class="nav-item" data-view="audit" onclick="switchView('audit')">
-          <span>📋</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
           <span>Audit Traces</span>
         </div>
         <div class="nav-item" data-view="review" onclick="switchView('review')">
-          <span>⚖️</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="8.5" cy="7.5" r="4"></circle>
+            <polyline points="17 11 19 13 23 9"></polyline>
+          </svg>
           <span>Review Queue</span>
-          <span class="badge-count" id="nav-review-badge" style="display:none; margin-left: auto; background: var(--pink-primary); color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; font-weight: 700;">0</span>
+          <span class="badge-count" id="nav-review-badge" style="display:none;">0</span>
         </div>
         <div class="nav-item" data-view="policy" onclick="switchView('policy')">
-          <span>🛡️</span>
-          <span>Policy & Rules</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span>Policy & Guardrails</span>
         </div>
       </nav>
 
-      <!-- Sidebar Mini Stats -->
+      <!-- Sidebar Mini Metrics Card -->
       <div class="sidebar-footer">
         <div class="mini-stat-card">
-          <div class="mini-stat-label">Cache Interceptions</div>
-          <div class="mini-stat-val" id="side-cache-rate" style="color: var(--blue-light);">0% (0 tokens)</div>
+          <div class="mini-stat-header">
+            <span class="mini-stat-label">Cache Hit Rate</span>
+            <span class="stat-dot blue-dot"></span>
+          </div>
+          <div class="mini-stat-val" id="side-cache-rate">0% (0 tokens)</div>
         </div>
         <div class="mini-stat-card">
-          <div class="mini-stat-label">Spend Velocity (1h)</div>
-          <div class="mini-stat-val" id="side-spend-val" style="color: var(--pink-light);">$0.00 / $10.00</div>
+          <div class="mini-stat-header">
+            <span class="mini-stat-label">Spend Velocity (1h)</span>
+            <span class="stat-dot pink-dot"></span>
+          </div>
+          <div class="mini-stat-val" id="side-spend-val">$0.00 / $10.00</div>
+        </div>
+
+        <div class="user-status-strip">
+          <div class="user-avatar-pill">CP</div>
+          <div style="overflow: hidden;">
+            <div class="user-status-name">Enterprise Gateway</div>
+            <div class="user-status-role">SQLite • Proxy Active</div>
+          </div>
         </div>
       </div>
     </aside>
 
-    <!-- Main Content Area -->
+    <!-- Main Content Stage -->
     <main class="main-stage">
       
-      <!-- Top Stage Bar -->
+      <!-- Top Header Navigation Bar (Claude Style) -->
       <header class="stage-header">
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <span id="proxy-title" style="font-weight: 700; font-size: 0.95rem; color: #fff; cursor: pointer;">ControlPlane Proxy</span>
-          <span style="font-size: 0.75rem; color: var(--text-muted);">Stage 1: Prevention • Stage 2: Detection</span>
+        <div class="header-left">
+          <button class="header-sidebar-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="9" y1="3" x2="9" y2="21"></line>
+            </svg>
+          </button>
+          <span class="header-title" id="proxy-title">ControlPlane Proxy</span>
+          <span class="header-subtitle">Stage 1: Prevention • Stage 2: Detection</span>
         </div>
-        <div class="header-status-pill">
-          <div class="pill-dot"></div>
-          <span id="header-status-text">Proxy Active (SQLite)</span>
+
+        <div class="header-right">
+          <button class="btn-inspector-toggle" onclick="toggleInspectorPanel()" id="btn-inspector-toggle">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Live Reasoning Inspector</span>
+          </button>
+
+          <div class="header-status-pill">
+            <div class="pill-dot"></div>
+            <span id="header-status-text">Governance Active</span>
+          </div>
         </div>
       </header>
 
@@ -94,14 +162,14 @@
           <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
             <span style="font-size: 1.25rem;">🔄</span>
             <div>
-              <div style="font-size: 0.86rem; font-weight: 700; color: #fff;">New Topic Detected</div>
-              <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.15rem;">
-                Your question appears to be on a different topic. Would you like to start a fresh conversation for cleaner context?
+              <div style="font-size: 0.88rem; font-weight: 700; color: #fff;">New Topic Detected</div>
+              <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                Your query seems to start a fresh topic. Would you like a clean conversation window to optimize token context?
               </div>
             </div>
           </div>
           <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; margin-top: 0.75rem;">
-            <button class="btn-topic-dismiss" onclick="dismissTopicOffer()">Continue in This Chat</button>
+            <button class="btn-topic-dismiss" onclick="dismissTopicOffer()">Continue Here</button>
             <button class="btn-topic-new" onclick="acceptNewChatOffer()">✨ Start Fresh Chat</button>
           </div>
         </div>
@@ -110,45 +178,82 @@
       <!-- VIEW 1: Chat Playground View -->
       <div class="chat-stream-container view-panel active" id="view-chat">
         
-        <!-- Welcome Hero (visible when chat is empty) -->
+        <!-- Welcome Hero (Claude-style Warm Editorial Hero) -->
         <div class="welcome-hero" id="welcome-hero">
-          <div class="hero-badge">ControlPlane Wrapper</div>
-          <h2 class="hero-title">Deterministic Evidence-Based Proxy</h2>
-          <p class="hero-sub">Enter a prompt below to see how ControlPlane wraps, routes, and validates LLM generation.</p>
+          <div class="claude-avatar-glow">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="url(#hero-star-grad)"/>
+              <defs>
+                <linearGradient id="hero-star-grad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#38bdf8"/>
+                  <stop offset="1" stop-color="#ec4899"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
 
+          <h1 class="hero-greeting" id="hero-greeting">Good evening</h1>
+          <p class="hero-subtitle">How can ControlPlane govern and protect your AI workflows today?</p>
+
+          <!-- Starter Cards (2x2 Grid) -->
           <div class="starter-grid">
             <div class="starter-card" onclick="useStarterPrompt('normal')">
-              <div class="starter-tag">Standard Task</div>
-              <div class="starter-text">Explain the time complexity of quicksort in markdown.</div>
+              <div class="starter-card-header">
+                <span class="starter-tag blue-tag">Standard Query</span>
+                <span class="starter-icon">⚡</span>
+              </div>
+              <div class="starter-title">Algorithm Complexity Analysis</div>
+              <div class="starter-text">Explain quicksort time complexity with best, avg, and worst cases.</div>
             </div>
+
             <div class="starter-card" onclick="useStarterPrompt('dedup')">
-              <div class="starter-tag">Dedup Cache Test</div>
-              <div class="starter-text">Run duplicate query to test 0-token instant cache hit.</div>
+              <div class="starter-card-header">
+                <span class="starter-tag pink-tag">Dedup Cache Hit</span>
+                <span class="starter-icon">💾</span>
+              </div>
+              <div class="starter-title">Zero-Token Dedup Interception</div>
+              <div class="starter-text">Send repeated query to test instant cache delivery with 0 tokens.</div>
             </div>
+
             <div class="starter-card" onclick="useStarterPrompt('pii')">
-              <div class="starter-tag">Safety Interception</div>
-              <div class="starter-text">Test SSN and API key detection with automatic policy block.</div>
+              <div class="starter-card-header">
+                <span class="starter-tag red-tag">Safety & Redaction</span>
+                <span class="starter-icon">🛡️</span>
+              </div>
+              <div class="starter-title">PII & Secret Key Redaction</div>
+              <div class="starter-text">Simulate prompt with SSN and API key to trigger automatic redaction.</div>
             </div>
+
             <div class="starter-card" onclick="useStarterPrompt('proof')">
-              <div class="starter-tag">Capable Tier Router</div>
-              <div class="starter-text">Step-by-step mathematical proof routed to capable model.</div>
+              <div class="starter-card-header">
+                <span class="starter-tag purple-tag">Tiered Routing</span>
+                <span class="starter-icon">🧠</span>
+              </div>
+              <div class="starter-title">Capable Model Routing</div>
+              <div class="starter-text">Request mathematical proof to trigger capable tier routing.</div>
             </div>
           </div>
         </div>
 
         <!-- Dynamic Message Stream Container -->
-        <div id="messages-list" style="display: flex; flex-direction: column; gap: 1.5rem; width: 100%;"></div>
+        <div id="messages-list" class="messages-list"></div>
 
       </div>
 
       <!-- VIEW 2: Audit Logs View -->
       <div class="view-panel" id="view-audit">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div class="view-header-bar">
           <div>
             <h2 class="panel-header-title">Audit Execution Traces</h2>
-            <p style="color: var(--text-secondary); font-size: 0.88rem;">Complete post-hoc explainability records stored in SQLite.</p>
+            <p class="panel-header-sub">Immutable SQLite audit ledger of all requests, decisions, confidence states, and latency metrics.</p>
           </div>
-          <button class="btn-new-chat" onclick="fetchAuditLogs()" style="padding: 0.5rem 1rem;">🔄 Refresh</button>
+          <button class="btn-refresh" onclick="fetchAuditLogs()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+            <span>Refresh</span>
+          </button>
         </div>
 
         <div class="audit-table-wrap">
@@ -157,29 +262,29 @@
               <tr>
                 <th>Timestamp</th>
                 <th>Request ID</th>
-                <th>Action</th>
+                <th>Decision Action</th>
                 <th>Confidence</th>
                 <th>Tier / Model</th>
-                <th>Cache Hit</th>
+                <th>Cache</th>
                 <th>Latency</th>
                 <th>Prompt</th>
               </tr>
             </thead>
             <tbody id="audit-rows">
-              <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading audit records...</td></tr>
+              <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Loading audit records...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- VIEW 3: Human Review Queue View (Day 7) -->
+      <!-- VIEW 3: Human Review Queue View -->
       <div class="view-panel" id="view-review">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div class="view-header-bar">
           <div>
-            <h2 class="panel-header-title">Human Escalation Review Queue</h2>
-            <p style="color: var(--text-secondary); font-size: 0.88rem;">Escalated queries with low confidence requiring human review and resolution.</p>
+            <h2 class="panel-header-title">Human Review & Escalation Queue</h2>
+            <p class="panel-header-sub">Supervise low-confidence or high-uncertainty requests requiring human decision support.</p>
           </div>
-          <div style="display: flex; gap: 0.5rem;">
+          <div class="filter-pills-group">
             <button class="filter-pill active" onclick="filterReviewQueue('all', this)">All</button>
             <button class="filter-pill" onclick="filterReviewQueue('pending', this)">Pending</button>
             <button class="filter-pill" onclick="filterReviewQueue('approved', this)">Approved</button>
@@ -187,8 +292,8 @@
           </div>
         </div>
 
-        <div id="review-cards-container" style="display: flex; flex-direction: column; gap: 1rem;">
-          <div style="text-align: center; color: var(--text-muted); padding: 3rem; background: var(--bg-surface); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+        <div id="review-cards-container" class="review-cards-container">
+          <div class="empty-state-box">
             Loading review queue...
           </div>
         </div>
@@ -196,80 +301,164 @@
 
       <!-- VIEW 4: Policy Rules View -->
       <div class="view-panel" id="view-policy">
-        <h2 class="panel-header-title">Policy & Guardrails Ruleset</h2>
-        <p style="color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 1.5rem;">Deterministic rules loaded from <code>policy.yaml</code>.</p>
+        <div class="view-header-bar">
+          <div>
+            <h2 class="panel-header-title">Policy & Governance Ruleset</h2>
+            <p class="panel-header-sub">Deterministic runtime rules and thresholds loaded directly from <code>app/policy.yaml</code>.</p>
+          </div>
+        </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
-          
-          <div class="starter-card">
-            <div class="starter-tag">MODEL TIERS & PRICING</div>
-            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem; line-height: 1.7;">
-              <p><strong>Cheap Tier:</strong> <code>gpt-3.5-turbo</code> ($0.0005 / 1k tokens in)</p>
-              <p><strong>Capable Tier:</strong> <code>gpt-4o</code> ($0.005 / 1k tokens in)</p>
-              <p><strong>Hourly Spend Limit:</strong> $10.00 USD</p>
-              <p><strong>Semantic Dedup Threshold:</strong> 0.82 Cosine Similarity</p>
+        <div class="policy-grid">
+          <div class="policy-card">
+            <div class="policy-card-tag blue-tag">MODEL TIERS & PRICING</div>
+            <div class="policy-card-body">
+              <div class="policy-row">
+                <span class="policy-key">Cheap Tier Model</span>
+                <span class="policy-val">gemini-flash-lite-latest / gpt-3.5-turbo ($0.0015/1k)</span>
+              </div>
+              <div class="policy-row">
+                <span class="policy-key">Capable Tier Model</span>
+                <span class="policy-val">gemini-3.1-pro / gpt-4o ($0.015/1k)</span>
+              </div>
+              <div class="policy-row">
+                <span class="policy-key">Hourly Velocity Limit</span>
+                <span class="policy-val">$10.00 USD / hour</span>
+              </div>
+              <div class="policy-row">
+                <span class="policy-key">Dedup Window</span>
+                <span class="policy-val">24 Hours (Normalized Hash Match)</span>
+              </div>
             </div>
           </div>
 
-          <div class="starter-card">
-            <div class="starter-tag">RESPONSIBILITY & PII PATTERNS</div>
-            <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 0.5rem; line-height: 1.8;">
-              <p><strong>Email:</strong> <code>[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+</code></p>
-              <p><strong>Phone:</strong> <code>(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}</code></p>
-              <p><strong>Credit Card:</strong> <code>\b(?:\d{4}[-\s]?){3}\d{4}\b</code></p>
-              <p><strong>API Key:</strong> <code>\b(?:sk-[a-zA-Z0-9]{20,}|AKIA[0-9A-Z]{16})\b</code></p>
-              <p><strong>SSN:</strong> <code>\b\d{3}-\d{2}-\d{4}\b</code></p>
+          <div class="policy-card">
+            <div class="policy-card-tag pink-tag">RESPONSIBILITY & PII REDACTION</div>
+            <div class="policy-card-body">
+              <div class="policy-row">
+                <span class="policy-key">SSN Pattern</span>
+                <span class="policy-val"><code>\b\d{3}-\d{2}-\d{4}\b</code></span>
+              </div>
+              <div class="policy-row">
+                <span class="policy-key">API Key Pattern</span>
+                <span class="policy-val"><code>sk-[a-zA-Z0-9]{20,}|AKIA...</code></span>
+              </div>
+              <div class="policy-row">
+                <span class="policy-key">Credit Card Pattern</span>
+                <span class="policy-val"><code>\b(?:\d{4}[-\s]?){3}\d{4}\b</code></span>
+              </div>
+              <div class="policy-row">
+                <span class="policy-key">Email & Phone</span>
+                <span class="policy-val">RFC 5322 regex + E.164 phone formats</span>
+              </div>
             </div>
           </div>
 
-          <div class="starter-card">
-            <div class="starter-tag">EVIDENCE-BASED CONFIDENCE MAPPING</div>
-            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem; line-height: 1.7;">
-              <p><strong>HIGH (>= 0.80)</strong> → <code>ALLOW</code></p>
-              <p><strong>QUALIFIED (0.50 - 0.79)</strong> → <code>FLAG</code> (With Banner)</p>
-              <p><strong>LOW (&lt; 0.50)</strong> → <code>FLAG</code> (Low Certainty Warning)</p>
-              <p><strong>PII Detected</strong> → <code>BLOCK</code> (Immediate Redaction)</p>
+          <div class="policy-card">
+            <div class="policy-card-tag purple-tag">DETERMINISTIC DECISION LADDER</div>
+            <div class="policy-card-body">
+              <div class="policy-row">
+                <span class="policy-key">1. BLOCK</span>
+                <span class="policy-val">Unfixable Safety Rule / Contradiction</span>
+              </div>
+              <div class="policy-row">
+                <span class="policy-key">2. EDIT</span>
+                <span class="policy-val">PII Present (Redacted) or Qualified Caveat</span>
+              </div>
+              <div class="policy-row">
+                <span class="policy-key">3. ESCALATE</span>
+                <span class="policy-val">Confidence LOW (&lt; 0.50) ➔ Review Queue</span>
+              </div>
+              <div class="policy-row">
+                <span class="policy-key">4. ALLOW</span>
+                <span class="policy-val">Confidence HIGH (&gt;= 0.80) ➔ Clean Delivery</span>
+              </div>
             </div>
           </div>
-
         </div>
       </div>
 
-      <!-- Bottom Floating Input Dock (Claude Style) -->
-      <div class="input-dock" id="chat-dock">
-        <div class="dock-top-row">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <select class="model-tier-select" id="tier-select">
-              <option value="">⚡ Auto Router (Cost-Optimized)</option>
-              <option value="gpt-3.5-turbo">Cheap Tier: gpt-3.5-turbo</option>
-              <option value="gpt-4o">Capable Tier: gpt-4o</option>
-              <option value="claude-3-5-sonnet-20241022">Anthropic: claude-3-5-sonnet</option>
-              <option value="gemini-1.5-pro">Google: gemini-1.5-pro</option>
-            </select>
-          </div>
-          <span class="dock-info" id="dock-token-hint">Standing TruthPrompt (v1) enabled</span>
-        </div>
+      <!-- Bottom Floating Input Dock (Pixel-Perfect Claude.ai Style) -->
+      <div class="claude-input-container" id="chat-dock">
+        <div class="claude-input-card">
+          <form id="chat-form" class="chat-form">
+            <textarea 
+              id="user-prompt" 
+              class="claude-textarea" 
+              placeholder="Send a prompt through ControlPlane proxy..."
+              rows="1"
+            ></textarea>
+            
+            <div class="claude-dock-actions">
+              <div class="dock-actions-left">
+                <div class="model-picker-pill">
+                  <span class="model-picker-dot"></span>
+                  <select class="claude-model-select" id="tier-select">
+                    <option value="">⚡ Auto Router (Cost-Optimized)</option>
+                    <option value="gemini-flash-lite-latest">Cheap Tier: gemini-flash-lite</option>
+                    <option value="gemini-3.1-pro">Capable Tier: gemini-3.1-pro</option>
+                    <option value="gpt-3.5-turbo">OpenAI: gpt-3.5-turbo</option>
+                    <option value="gpt-4o">OpenAI: gpt-4o</option>
+                    <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+                  </select>
+                </div>
+                
+                <span class="truth-envelope-badge">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span>TruthPrompt v1 Active</span>
+                </span>
+              </div>
 
-        <form id="chat-form" style="display: flex; align-items: flex-end; gap: 0.75rem;">
-          <textarea 
-            id="user-prompt" 
-            class="prompt-textarea" 
-            placeholder="Send a prompt through ControlPlane proxy..."
-            rows="1"
-          ></textarea>
-          <button type="submit" class="btn-send" id="btn-send" title="Execute Query">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"></line>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-            </svg>
-          </button>
-        </form>
+              <div class="dock-actions-right">
+                <button type="submit" class="claude-send-btn" id="btn-send" title="Send Prompt (Enter)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="19" x2="12" y2="5"></line>
+                    <polyline points="5 12 12 5 19 12"></polyline>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
 
     </main>
 
+    <!-- Slide-Out Live Reasoning Inspector Panel (Claude Artifacts Style) -->
+    <aside class="inspector-drawer" id="inspector-drawer">
+      <div class="inspector-header">
+        <div class="inspector-title-wrap">
+          <div class="inspector-sparkle">🔍</div>
+          <div>
+            <div class="inspector-title">Reasoning & Audit Trail</div>
+            <div class="inspector-sub">Real-Time Two-Stage Pipeline Inspector</div>
+          </div>
+        </div>
+        <button class="btn-drawer-close" onclick="toggleInspectorPanel()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="inspector-tabs">
+        <button class="insp-tab-btn active" onclick="switchInspectorTab('summary', this)">Summary</button>
+        <button class="insp-tab-btn" onclick="switchInspectorTab('stage1', this)">Stage 1: Prevention</button>
+        <button class="insp-tab-btn" onclick="switchInspectorTab('stage2', this)">Stage 2: Detection</button>
+        <button class="insp-tab-btn" onclick="switchInspectorTab('json', this)">Raw JSON</button>
+      </div>
+
+      <div class="inspector-body" id="inspector-body">
+        <div class="inspector-empty">
+          <p>Send a prompt to inspect live 4-question intake, TruthPrompt envelope, model telemetry, and deterministic decision rules.</p>
+        </div>
+      </div>
+    </aside>
+
   </div>
 
-  <script src="/static/app.js?v=5.0"></script>
+  <script src="/static/app.js?v=6.0"></script>
 </body>
 </html>
