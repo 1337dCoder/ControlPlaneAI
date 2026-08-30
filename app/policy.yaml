@@ -45,6 +45,10 @@ responsibility:
       name: "Direct Credential Exfiltration"
       keywords: ["dump passwords", "extract private keys from memory", "scrape user credentials"]
       action_on_match: "BLOCK"
+    - rule_id: "POL-003"
+      name: "Explicit & Public Indecency Policy"
+      keywords: ["do it everywhere", "public sex", "public indecency", "unsolicited explicit content"]
+      action_on_match: "BLOCK"
 
 # Performance & Confidence Thresholds
 confidence:

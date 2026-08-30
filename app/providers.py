@@ -206,11 +206,30 @@ class LLMProviderClient:
         }
 
         try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            async with httpx.AsyncClient(timeout=60.0) as client:
                 response = await client.post(url, json=payload)
+                
+                # If model hit 429 or 404 and wasn't gemini-flash-lite-latest, try fast fallback
+                if (response.status_code in (404, 429, 503)) and normalized_model != "gemini-flash-lite-latest":
+                    fallback_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key={self.gemini_api_key}"
+                    response = await client.post(fallback_url, json=payload)
+                
                 response.raise_for_status()
                 data = response.json()
-                candidate = data["candidates"][0]["content"]["parts"][0]["text"]
+                
+                candidates = data.get("candidates", [])
+                if candidates:
+                    first_cand = candidates[0]
+                    if first_cand.get("finishReason") == "SAFETY":
+                        candidate = "I cannot fulfill this request as it involves sensitive, explicit, or restricted content."
+                    else:
+                        parts = first_cand.get("content", {}).get("parts", [])
+                        candidate = parts[0].get("text", "") if parts else "No response generated."
+                elif "promptFeedback" in data and data["promptFeedback"].get("blockReason"):
+                    candidate = f"Request blocked by safety policy: {data['promptFeedback']['blockReason']}"
+                else:
+                    candidate = "No candidates returned from upstream model."
+
                 latency_ms = (time.perf_counter() - start_time) * 1000.0
                 tokens_est = len(candidate.split()) * 2
 
@@ -225,9 +244,14 @@ class LLMProviderClient:
         except Exception as e:
             print(f"GEMINI EXCEPTION: {type(e)} - {str(e)}")
             latency_ms = (time.perf_counter() - start_time) * 1000.0
-            mock_res = self._mock_generate(user_prompt, model_name, latency_ms)
-            mock_res["error"] = str(e)
-            return mock_res
+            return {
+                "content": f"⚠️ Upstream Provider Error: {str(e)}",
+                "tokens_used": 0,
+                "logprobs": [],
+                "latency_ms": round(latency_ms, 2),
+                "provider": "gemini_error",
+                "error": str(e)
+            }
 
     def _mock_generate(self, user_prompt: str, model_name: str, latency_ms: float) -> Dict[str, Any]:
         """Generate deterministic mock response adhering to TruthPrompt structure."""

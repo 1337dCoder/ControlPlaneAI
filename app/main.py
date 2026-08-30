@@ -403,8 +403,13 @@ async def chat(request: ChatRequest) -> ChatResponse:
         if decision.warning_banner:
             final_content = f"{decision.warning_banner}\n\n{candidate_text}"
 
-    # Cache successful clean response
-    if decision.action in ["ALLOW", "EDIT"]:
+    # Cache successful clean response (Never cache errors or mock fallbacks)
+    if (
+        decision.action in ["ALLOW", "EDIT"]
+        and not llm_output.get("error")
+        and llm_output.get("provider") != "mock"
+        and not final_content.startswith("[FACTS]:")
+    ):
         prompt_hash = cost_detector.normalize_for_hash(raw_prompt)
         db.save_dedup_cache(prompt_hash, raw_prompt, final_content)
 
