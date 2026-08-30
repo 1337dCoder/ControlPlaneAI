@@ -8,10 +8,10 @@
   <meta http-equiv="Expires" content="0">
   <title>ControlPlane — Deterministic AI Governance & Proxy</title>
   
-  <!-- Premium Modern Fonts -->
+  <!-- Premium Modern Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- Markdown, Code Highlighting & KaTeX Math Libraries -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
@@ -21,7 +21,7 @@
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
-  <link rel="stylesheet" href="/style.css?v=7.0">
+  <link rel="stylesheet" href="/style.css?v=8.0">
 </head>
 <body>
 
@@ -94,19 +94,11 @@
       <div class="sidebar-footer">
         <div class="mini-stat-card">
           <div class="mini-stat-label">CACHE HIT RATE</div>
-          <div class="mini-stat-val" id="side-cache-rate">20% (5 hits)</div>
+          <div class="mini-stat-val" id="side-cache-rate">0% (0 hits)</div>
         </div>
         <div class="mini-stat-card">
           <div class="mini-stat-label">SPEND VELOCITY (1H)</div>
-          <div class="mini-stat-val" id="side-spend-val">$0.0409 / $10.00</div>
-        </div>
-
-        <div class="user-status-strip">
-          <div class="user-avatar-pill">EG</div>
-          <div class="user-status-text">
-            <div class="user-status-name">Enterprise Gateway</div>
-            <div class="user-status-role">Proxy Active</div>
-          </div>
+          <div class="mini-stat-val" id="side-spend-val">$0.00 / $10.00</div>
         </div>
       </div>
     </aside>
@@ -123,10 +115,7 @@
               <line x1="9" y1="3" x2="9" y2="21"></line>
             </svg>
           </button>
-          <div class="header-titles">
-            <span class="header-title">ControlPlane Proxy</span>
-            <span class="header-subtitle">STAGE 1 PREVENTION • STAGE 2 DETECTION</span>
-          </div>
+          <span class="header-title">ControlPlane</span>
         </div>
 
         <div class="header-right">
@@ -135,12 +124,12 @@
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <span>Live Reasoning Inspector</span>
+            <span>Live Inspector</span>
           </button>
 
           <div class="header-status-pill">
-            <span class="pill-dot">■</span>
-            <span id="header-status-text">GOVERNANCE ACTIVE</span>
+            <span class="pill-dot">●</span>
+            <span id="header-status-text">Governance Active</span>
           </div>
 
           <button class="btn-header-gear" onclick="promptForBackendUrl()" title="Configure Backend URL">
@@ -155,49 +144,46 @@
       <!-- VIEW 1: Chat Playground View -->
       <div class="chat-stream-container view-panel active" id="view-chat">
         
-        <!-- Welcome Hero (Grid Layout matching Screenshot) -->
+        <!-- Centered Welcome Hero -->
         <div class="welcome-hero" id="welcome-hero">
           
-          <!-- 2x2 Bento Starter Cards -->
+          <div class="hero-center-box">
+            <div class="hero-avatar-glow">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="url(#star-gradient)"/>
+                <defs>
+                  <linearGradient id="star-gradient" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#38bdf8"/>
+                    <stop offset="1" stop-color="#ec4899"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            
+            <h1 class="hero-title" id="hero-greeting">Good evening</h1>
+            <p class="hero-subtitle">How can ControlPlane govern and protect your AI workflows today?</p>
+          </div>
+
+          <!-- Clean 2x2 Bento Cards -->
           <div class="bento-grid">
             <div class="bento-card" onclick="useStarterPrompt('normal')">
-              <div class="bento-tag">STANDARD QUERY</div>
-              <div class="bento-title">Algorithm Complexity Analysis</div>
+              <div class="bento-title">⚡ Algorithm Complexity Analysis</div>
               <div class="bento-desc">Explain quicksort time complexity with best, average, and worst cases.</div>
             </div>
 
             <div class="bento-card" onclick="useStarterPrompt('dedup')">
-              <div class="bento-tag">DEDUP CACHE HIT</div>
-              <div class="bento-title">Zero-Token Dedup Interception</div>
-              <div class="bento-desc">Send a repeated query to test instant cache delivery with 0 tokens.</div>
+              <div class="bento-title">💾 Zero-Token Dedup Interception</div>
+              <div class="bento-desc">Send repeated query to test instant cache delivery with 0 tokens.</div>
             </div>
 
             <div class="bento-card" onclick="useStarterPrompt('pii')">
-              <div class="bento-tag">SAFETY & REDACTION</div>
-              <div class="bento-title">PII & Secret Key Redaction</div>
+              <div class="bento-title">🛡️ PII & Secret Key Redaction</div>
               <div class="bento-desc">Simulate a prompt containing an SSN and an API key to trigger redaction.</div>
             </div>
 
             <div class="bento-card" onclick="useStarterPrompt('proof')">
-              <div class="bento-tag">TIERED ROUTING</div>
-              <div class="bento-title">Capable Model Routing</div>
+              <div class="bento-title">🧠 Capable Model Routing</div>
               <div class="bento-desc">Request a formal mathematical proof to trigger capable-tier routing.</div>
-            </div>
-          </div>
-
-          <!-- 3 Stats Metric Summary Boxes -->
-          <div class="stats-summary-row">
-            <div class="stat-summary-box">
-              <div class="stat-summary-label">REQUESTS GOVERNED</div>
-              <div class="stat-summary-val" id="stat-requests-count">25</div>
-            </div>
-            <div class="stat-summary-box">
-              <div class="stat-summary-label">BLOCKED AT PREVENTION</div>
-              <div class="stat-summary-val" id="stat-blocked-count">1</div>
-            </div>
-            <div class="stat-summary-box">
-              <div class="stat-summary-label">ESCALATED TO HUMAN</div>
-              <div class="stat-summary-val" id="stat-escalated-count">1</div>
             </div>
           </div>
 
@@ -311,7 +297,7 @@
         </div>
       </div>
 
-      <!-- Bottom Floating Claude Input Dock -->
+      <!-- Bottom Floating Centered Input Dock -->
       <footer class="input-dock-container">
         <form class="input-dock" id="chat-form">
           
@@ -319,7 +305,7 @@
             <textarea 
               id="prompt-input" 
               class="prompt-textarea" 
-              placeholder="Send a prompt through the ControlPlane proxy..." 
+              placeholder="Ask anything or test governance..." 
               rows="1"
               autocomplete="off"
             ></textarea>
@@ -329,15 +315,15 @@
             <div class="input-tools-left">
               <div class="model-select-pill">
                 <select id="model-override-select" class="custom-select">
-                  <option value="">AUTO ROUTER • COST OPTIMIZED</option>
-                  <option value="cheap">⚡ Cheap Tier (gemini-flash-lite)</option>
-                  <option value="capable">🧠 Capable Tier (gemini-pro)</option>
+                  <option value="">⚡ Auto Router (Cost Optimized)</option>
+                  <option value="cheap">⚡ Cheap Tier (Flash)</option>
+                  <option value="capable">🧠 Capable Tier (Pro)</option>
                 </select>
                 <span class="select-chevron">˅</span>
               </div>
 
               <div class="truthprompt-indicator-pill">
-                <span>TRUTHPROMPT V1 ACTIVE</span>
+                <span>✨ TruthPrompt Active</span>
               </div>
             </div>
 
@@ -383,6 +369,6 @@
 
   </div>
 
-  <script src="/app.js?v=7.0"></script>
+  <script src="/app.js?v=8.0"></script>
 </body>
 </html>
