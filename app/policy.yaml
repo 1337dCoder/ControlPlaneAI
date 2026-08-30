@@ -1,0 +1,86 @@
+# ControlPlane Wrapper Policy Configuration
+version: "1.0.0"
+
+# Model Tiers Configuration
+model_tiers:
+  cheap:
+    default_model: "gemini-3.6-flash"
+    cost_per_1k_input: 0.0005
+    cost_per_1k_output: 0.0015
+    max_input_tokens: 4096
+  capable:
+    default_model: "gemini-3.1-pro"
+    cost_per_1k_input: 0.005
+    cost_per_1k_output: 0.015
+    max_input_tokens: 16384
+
+# Routing Complexity Keywords (forces 'capable' tier)
+routing_triggers:
+  capable_keywords:
+    - "step-by-step proof"
+    - "mathematical proof"
+    - "formal verification"
+    - "architectural review"
+    - "security audit"
+    - "multi-variable optimization"
+    - "quantum"
+    - "differential equations"
+  max_prompt_length_for_cheap: 1200  # in characters
+
+# Responsibility & Safety Policies
+responsibility:
+  pii_regex:
+    email: '[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+'
+    phone: '(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}'
+    ssn: '\b\d{3}-\d{2}-\d{4}\b'
+    credit_card: '\b(?:\d{4}[-\s]?){3}\d{4}\b'
+    api_key: '\b(?:sk-[a-zA-Z0-9]{20,}|AKIA[0-9A-Z]{16}|ghp_[a-zA-Z0-9]{36})\b'
+  
+  banned_topics:
+    - rule_id: "POL-001"
+      name: "Malicious Exploit Generation"
+      keywords: ["write a ransomware script", "ddos script", "exploit payload generator", "bypass authentication zero-day"]
+      action_on_match: "BLOCK"
+    - rule_id: "POL-002"
+      name: "Direct Credential Exfiltration"
+      keywords: ["dump passwords", "extract private keys from memory", "scrape user credentials"]
+      action_on_match: "BLOCK"
+
+# Performance & Confidence Thresholds
+confidence:
+  high_threshold: 0.80
+  qualified_threshold: 0.50
+  default_threshold: 0.75
+
+# Cost & Spend Anomaly Controls
+cost_controls:
+  dedup_cache_window_hours: 24
+  dedup_similarity_threshold: 0.82
+  spend_velocity_hourly_limit_usd: 10.00
+  single_request_cost_warning_usd: 0.50
+
+# Deterministic Decision Table
+# Maps (Confidence State, Findings Condition) -> Action
+decision_matrix:
+  - if:
+      has_pii: true
+    action: "BLOCK"
+    reason: "Response contains unredacted Personally Identifiable Information (PII) or secrets."
+  - if:
+      has_critical_policy_hit: true
+    action: "BLOCK"
+    reason: "Content triggered a critical policy safety rule."
+  - if:
+      confidence_state: "HIGH"
+    action: "ALLOW"
+    reason: "Evidence-backed high confidence; all validation checks passed."
+  - if:
+      confidence_state: "QUALIFIED"
+    action: "FLAG"
+    reason: "Moderate confidence or missing granular logprobs; answer delivered with qualified advisory."
+    banner: "⚠️ [ControlPlane Notice: This response is qualified. Verification recommended for critical decisions.]"
+  - if:
+      confidence_state: "LOW"
+    action: "FLAG"
+    reason: "Low token certainty or unverified assertions detected."
+    banner: "⚠️ [ControlPlane Warning: Low confidence detected in model generation. Do not rely without independent verification.]"
