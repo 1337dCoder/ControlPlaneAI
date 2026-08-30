@@ -22,6 +22,7 @@ except ImportError:
 class DatabaseManager:
     """Manages database operations with automatic SQLite / Firebase Firestore switching."""
 
+
     def __init__(self, db_path: str = "controlplane.db", use_firestore: Optional[bool] = None):
         self.db_path = db_path
         
