@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: controlplane-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.8
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CHEAP_MODEL
+        value: gemini-flash-lite-latest
+      - key: CAPABLE_MODEL
+        value: gemini-3.1-pro
+      - key: DATABASE_PATH
+        value: /tmp/controlplane.db
