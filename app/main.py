@@ -229,32 +229,38 @@ async def chat(request: ChatRequest) -> ChatResponse:
             latency_ms=round(latency_ms, 2)
         )
 
-    # 1.5 Dynamic Clarification Interceptor
+    # 1.5 Clarification Interceptor (Only for genuinely ambiguous prompts like 1-2 vague words)
     is_clarification_response = request.metadata.get("is_clarification_response", False)
-    if not is_clarification_response and len(raw_prompt.split()) < 6:
-        # Prompt is extremely short/ambiguous, intercept and ask LLM to generate clarifying questions
-        sys_prompt = (
-            "The user's prompt is too short or vague. Generate exactly 3 short, targeted clarifying "
-            "questions to gather necessary context, constraints, or formatting requirements before "
-            "attempting to answer. Return ONLY a valid JSON array of strings and nothing else."
-        )
-        llm_out = await provider_client.generate(sys_prompt, raw_prompt, model_name=router.cheap_model)
-        try:
-            questions = json.loads(llm_out.get("content", "[]"))
-            if not isinstance(questions, list) or len(questions) < 1:
-                raise ValueError("Not a valid array")
-        except:
-            questions = ["Can you provide more context?", "Are there any specific constraints?", "What is the expected format?"]
+    words = raw_prompt.strip().split()
+    vague_keywords = {"help", "code", "error", "bug", "fix", "test", "hi", "hello", "check"}
+    is_genuinely_ambiguous = (
+        not is_clarification_response and
+        len(words) <= 2 and
+        (len(words) == 1 or any(w.lower() in vague_keywords for w in words))
+    )
+
+    if is_genuinely_ambiguous:
+        # Provide 4 distinct structured focus options with zero extra LLM calls
+        options = [
+            "1. High-level summary & core concept",
+            "2. In-depth technical breakdown & inner workings",
+            "3. Practical examples & real-world use cases",
+            "4. Step-by-step guide & code implementation"
+        ]
             
         latency_ms = (time.perf_counter() - start_time) * 1000.0
-        decision = Decision(action="ASK_USER", reasons=["Prompt is too ambiguous; clarification required"], clarifying_questions=questions[:3])
-        conf = ConfidenceResult(state="LOW", reasons=["Prompt lacks sufficient context to generate a confident response"])
+        decision = Decision(
+            action="ASK_USER",
+            reasons=["Prompt is ambiguous; select your desired focus area"],
+            clarifying_questions=options
+        )
+        conf = ConfidenceResult(state="LOW", reasons=["Single-word or underspecified prompt requires focus clarification"])
         findings = DetectionFindings(performance_score=0.0, is_duplicate=False)
         intake_stub = IntakeResult(task=raw_prompt[:50], source="inferred")
         
         return ChatResponse(
             request_id=request_id,
-            content="I need a bit more detail to give you an accurate response.",
+            content="Please choose how you would like this answered:",
             decision=decision,
             confidence=conf,
             findings=findings,
@@ -262,7 +268,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
             tier="cheap",
             model_used=router.cheap_model,
             cached=False,
-            tokens_used=llm_out.get("tokens_used", 0),
+            tokens_used=0,
             estimated_cost_usd=0.0,
             latency_ms=round(latency_ms, 2)
         )

@@ -82,16 +82,42 @@ function showTopicOffer(newPrompt) {
   }
 }
 
+function executePrompt(promptText) {
+  const textarea = document.getElementById("user-prompt");
+  const form = document.getElementById("chat-form");
+  if (textarea && form) {
+    textarea.value = promptText;
+    // Trigger submit directly
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+  }
+}
+
 function dismissTopicOffer() {
   const popup = document.getElementById("topic-switch-popup");
   if (popup) {
     popup.style.display = "none";
   }
+  if (pendingTopicPrompt) {
+    const promptToSend = pendingTopicPrompt;
+    pendingTopicPrompt = "";
+    conversationPrompts.push(promptToSend);
+    executePrompt(promptToSend);
+  }
 }
 
 function acceptNewChatOffer() {
-  dismissTopicOffer();
+  const promptToSend = pendingTopicPrompt;
+  pendingTopicPrompt = "";
+  const popup = document.getElementById("topic-switch-popup");
+  if (popup) popup.style.display = "none";
+  
   resetToNewChat();
+  if (promptToSend) {
+    setTimeout(() => {
+      conversationPrompts.push(promptToSend);
+      executePrompt(promptToSend);
+    }, 100);
+  }
 }
 
 function resetToNewChat() {
@@ -285,21 +311,22 @@ function replaceLoadingWithResponse(loadingId, resp) {
     calloutHtml = `<div class="warning-callout">${escapeHtml(resp.decision.warning_banner)}</div>`;
   }
 
-  // Response Text Content or Clarification Form
+  // Response Text Content or Clarification Form (4 Quick Options)
   let contentHtml = "";
   if (resp.decision.action === "ASK_USER" && resp.decision.clarifying_questions && resp.decision.clarifying_questions.length > 0) {
-    const qHtml = resp.decision.clarifying_questions.map((q, i) => `
-      <div style="margin-bottom: 0.75rem;">
-        <label style="display: block; font-size: 0.85rem; color: var(--blue-light); margin-bottom: 0.25rem;">${escapeHtml(q)}</label>
-        <input type="text" class="clarification-input" data-q="${escapeHtml(q)}" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.2); border: 1px solid var(--border-medium); border-radius: 4px; color: white;" placeholder="Your answer...">
-      </div>
+    const icons = ['📖', '🔬', '💡', '💻'];
+    const qHtml = resp.decision.clarifying_questions.map((opt, i) => `
+      <button class="clarification-option-btn" onclick="selectClarificationOption(this, '${escapeHtml(resp.intake.task)}', '${escapeHtml(opt)}')">
+        <span class="option-icon">${icons[i % icons.length]}</span>
+        <span class="option-text">${escapeHtml(opt)}</span>
+        <span class="option-arrow">➔</span>
+      </button>
     `).join("");
     
     contentHtml = `
-      <div class="assistant-prose">${renderMarkdown(resp.content || "I need some clarification:")}</div>
-      <div class="clarification-form" style="margin-top: 1rem; background: var(--bg-surface-elevated); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-medium);">
+      <div class="assistant-prose">${renderMarkdown(resp.content || "Please choose your preferred answer focus:")}</div>
+      <div class="clarification-options-grid">
         ${qHtml}
-        <button onclick="submitClarifications(this, '${escapeHtml(resp.intake.task)}')" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: var(--pink-primary); border: none; border-radius: 4px; color: white; cursor: pointer; font-weight: 600;">Submit Clarifications</button>
       </div>
     `;
   } else {
@@ -496,35 +523,19 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
-async function submitClarifications(btn, originalTask) {
-  const form = btn.parentElement;
-  const inputs = form.querySelectorAll(".clarification-input");
-  let enrichedPrompt = `Original Request: ${originalTask}\n\n`;
+async function selectClarificationOption(btn, originalTask, selectedOption) {
+  const container = btn.closest(".clarification-options-grid");
+  if (container) {
+    container.innerHTML = `<div style="color: var(--blue-light); font-weight: 600; font-size: 0.85rem; padding: 0.5rem 0;">Selected: ${escapeHtml(selectedOption)} — Generating tailored response...</div>`;
+  }
   
-  let allAnswered = true;
-  inputs.forEach(input => {
-    const q = input.getAttribute("data-q");
-    const a = input.value.trim();
-    if (!a) {
-      allAnswered = false;
-      input.style.borderColor = "var(--pink-primary)";
-    } else {
-      input.style.borderColor = "var(--border-medium)";
-      enrichedPrompt += `Q: ${q}\nA: ${a}\n\n`;
-    }
-  });
-
-  if (!allAnswered) return;
-
-  btn.disabled = true;
-  btn.textContent = "Submitting...";
-
+  const enrichedPrompt = `Original Request: ${originalTask}\n\nSelected Focus / Expected Output: ${selectedOption}`;
+  
   // Append User Message Bubble
-  appendUserMessage("Clarification Provided");
+  appendUserMessage(`Focus: ${selectedOption}`);
   
   // Append Loading Assistant Card
   const loadingId = appendLoadingAssistant();
-
   const modelOverride = document.getElementById("tier-select").value || null;
 
   try {
@@ -548,16 +559,11 @@ async function submitClarifications(btn, originalTask) {
     const data = await res.json();
     replaceLoadingWithResponse(loadingId, data);
     fetchAuditLogs();
-    
-    // Disable the old form
-    form.innerHTML = `<p style="color: var(--color-allow); font-size: 0.85rem; font-weight: 600;">Clarifications submitted successfully.</p>`;
   } catch (err) {
     const loadingEl = document.getElementById(loadingId);
     if (loadingEl) {
-      loadingEl.innerHTML = `<div class="blocked-callout">Error: ${err.message}</div>`;
+      loadingEl.innerHTML = `<div class="blocked-callout">⚠️ Error: ${err.message}</div>`;
     }
-    btn.disabled = false;
-    btn.textContent = "Submit Clarifications";
   }
 }
 
