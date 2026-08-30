@@ -15,12 +15,12 @@ function getApiBaseUrl() {
   if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.")) {
     return "";
   }
-  // Default to local network IP when on Firebase Hosting if not specified
-  return "http://192.168.1.33:8000";
+  // Default to live HTTPS tunnel URL for Firebase Hosting
+  return "https://conclude-collector-nhs-stick.trycloudflare.com";
 }
 
 function promptForBackendUrl() {
-  const current = localStorage.getItem("cp_backend_url") || "http://192.168.1.33:8000";
+  const current = localStorage.getItem("cp_backend_url") || "https://conclude-collector-nhs-stick.trycloudflare.com";
   const url = prompt("Enter ControlPlane Backend Proxy URL (e.g. http://192.168.1.33:8000 or your Cloud URL):", current);
   if (url !== null) {
     localStorage.setItem("cp_backend_url", url.trim());
