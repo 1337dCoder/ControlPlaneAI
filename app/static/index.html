@@ -8,6 +8,9 @@
   <meta http-equiv="Expires" content="0">
   <title>ControlPlane — Deterministic AI Governance & Proxy</title>
   
+  <!-- Favicon Monogram -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
   <!-- Premium Modern Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,7 +24,7 @@
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
-  <link rel="stylesheet" href="/style.css?v=8.0">
+  <link rel="stylesheet" href="/style.css?v=9.0">
 </head>
 <body>
 
@@ -31,7 +34,13 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="brand-badge">
-          <div class="cp-logo-box">CP</div>
+          <div class="cp-logo-icon">
+            <svg viewBox="0 0 100 100" fill="currentColor" width="22" height="22">
+              <path d="M50 20 C30 20 18 35 18 55 C18 68 25 78 36 83 C28 76 26 65 26 55 C26 40 36 28 50 28 C56 28 61 30 65 33 C61 25 56 20 50 20 Z" />
+              <path d="M48 40 C62 40 76 50 76 68 C76 82 65 92 50 92 C42 92 36 89 31 84 C38 88 46 88 52 86 C64 82 70 73 70 65 C70 54 60 46 48 46 C44 46 41 47 38 49 C40 43 44 40 48 40 Z" />
+              <rect x="42" y="70" width="6" height="24" rx="3" />
+            </svg>
+          </div>
           <div class="brand-title">ControlPlane</div>
         </div>
       </div>
@@ -128,7 +137,7 @@
           </button>
 
           <div class="header-status-pill">
-            <span class="pill-dot">●</span>
+            <span class="pill-dot"></span>
             <span id="header-status-text">Governance Active</span>
           </div>
 
@@ -149,14 +158,10 @@
           
           <div class="hero-center-box">
             <div class="hero-avatar-glow">
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="url(#star-gradient)"/>
-                <defs>
-                  <linearGradient id="star-gradient" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                    <stop stop-color="#38bdf8"/>
-                    <stop offset="1" stop-color="#ec4899"/>
-                  </linearGradient>
-                </defs>
+              <svg viewBox="0 0 100 100" fill="currentColor" width="38" height="38">
+                <path d="M50 20 C30 20 18 35 18 55 C18 68 25 78 36 83 C28 76 26 65 26 55 C26 40 36 28 50 28 C56 28 61 30 65 33 C61 25 56 20 50 20 Z" />
+                <path d="M48 40 C62 40 76 50 76 68 C76 82 65 92 50 92 C42 92 36 89 31 84 C38 88 46 88 52 86 C64 82 70 73 70 65 C70 54 60 46 48 46 C44 46 41 47 38 49 C40 43 44 40 48 40 Z" />
+                <rect x="42" y="70" width="6" height="24" rx="3" />
               </svg>
             </div>
             
@@ -167,22 +172,22 @@
           <!-- Clean 2x2 Bento Cards -->
           <div class="bento-grid">
             <div class="bento-card" onclick="useStarterPrompt('normal')">
-              <div class="bento-title">⚡ Algorithm Complexity Analysis</div>
+              <div class="bento-title">Algorithm Complexity Analysis</div>
               <div class="bento-desc">Explain quicksort time complexity with best, average, and worst cases.</div>
             </div>
 
             <div class="bento-card" onclick="useStarterPrompt('dedup')">
-              <div class="bento-title">💾 Zero-Token Dedup Interception</div>
+              <div class="bento-title">Zero-Token Dedup Interception</div>
               <div class="bento-desc">Send repeated query to test instant cache delivery with 0 tokens.</div>
             </div>
 
             <div class="bento-card" onclick="useStarterPrompt('pii')">
-              <div class="bento-title">🛡️ PII & Secret Key Redaction</div>
+              <div class="bento-title">PII & Secret Key Redaction</div>
               <div class="bento-desc">Simulate a prompt containing an SSN and an API key to trigger redaction.</div>
             </div>
 
             <div class="bento-card" onclick="useStarterPrompt('proof')">
-              <div class="bento-title">🧠 Capable Model Routing</div>
+              <div class="bento-title">Capable Model Routing</div>
               <div class="bento-desc">Request a formal mathematical proof to trigger capable-tier routing.</div>
             </div>
           </div>
@@ -315,15 +320,15 @@
             <div class="input-tools-left">
               <div class="model-select-pill">
                 <select id="model-override-select" class="custom-select">
-                  <option value="">⚡ Auto Router (Cost Optimized)</option>
-                  <option value="cheap">⚡ Cheap Tier (Flash)</option>
-                  <option value="capable">🧠 Capable Tier (Pro)</option>
+                  <option value="">Auto Router (Cost Optimized)</option>
+                  <option value="cheap">Cheap Tier (Flash)</option>
+                  <option value="capable">Capable Tier (Pro)</option>
                 </select>
                 <span class="select-chevron">˅</span>
               </div>
 
               <div class="truthprompt-indicator-pill">
-                <span>✨ TruthPrompt Active</span>
+                <span>TRUTHPROMPT ACTIVE</span>
               </div>
             </div>
 
@@ -369,6 +374,6 @@
 
   </div>
 
-  <script src="/app.js?v=8.0"></script>
+  <script src="/app.js?v=9.0"></script>
 </body>
 </html>

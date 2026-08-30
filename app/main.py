@@ -178,6 +178,15 @@ async def get_app_js():
     raise HTTPException(status_code=404, detail="app.js not found")
 
 
+@app.get("/favicon.svg")
+@app.get("/favicon.ico")
+async def get_favicon():
+    fav_file = STATIC_DIR / "favicon.svg"
+    if fav_file.exists():
+        return FileResponse(str(fav_file), media_type="image/svg+xml")
+    raise HTTPException(status_code=404, detail="favicon not found")
+
+
 @app.get("/health")
 async def health():
     return {

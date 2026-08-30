@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Stylized ControlPlane CP Monogram -->
+  <g fill="currentColor">
+    <!-- Top-left crescent (C) -->
+    <path d="M50 20 C30 20 18 35 18 55 C18 68 25 78 36 83 C28 76 26 65 26 55 C26 40 36 28 50 28 C56 28 61 30 65 33 C61 25 56 20 50 20 Z" />
+    
+    <!-- Bottom-right crescent (P) -->
+    <path d="M48 40 C62 40 76 50 76 68 C76 82 65 92 50 92 C42 92 36 89 31 84 C38 88 46 88 52 86 C64 82 70 73 70 65 C70 54 60 46 48 46 C44 46 41 47 38 49 C40 43 44 40 48 40 Z" />
+    
+    <!-- Vertical stem (P stem) -->
+    <rect x="42" y="70" width="6" height="24" rx="3" />
+  </g>
+</svg>
