@@ -16,11 +16,11 @@ function getApiBaseUrl() {
     return "";
   }
   // Default to live HTTPS tunnel URL for Firebase Hosting
-  return "https://conclude-collector-nhs-stick.trycloudflare.com";
+  return "https://compatibility-abstract-homepage-conf.trycloudflare.com";
 }
 
 function promptForBackendUrl() {
-  const current = localStorage.getItem("cp_backend_url") || "https://conclude-collector-nhs-stick.trycloudflare.com";
+  const current = localStorage.getItem("cp_backend_url") || "https://compatibility-abstract-homepage-conf.trycloudflare.com";
   const url = prompt("Enter ControlPlane Backend Proxy URL (e.g. http://192.168.1.33:8000 or your Cloud URL):", current);
   if (url !== null) {
     localStorage.setItem("cp_backend_url", url.trim());
