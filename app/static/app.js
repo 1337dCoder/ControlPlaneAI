@@ -288,14 +288,14 @@ function checkTopicShift(newPrompt) {
   const setA = extractKeywords(lastPrompt);
   const setB = extractKeywords(newPrompt);
 
-  if (setA.size >= 2 && setB.size >= 2) {
+  if (setA.size >= 1 && setB.size >= 1) {
     let intersection = 0;
     for (const item of setB) {
       if (setA.has(item)) intersection++;
     }
     const union = new Set([...setA, ...setB]).size;
-    const similarity = union > 0 ? intersection / union : 1;
-    return similarity < 0.15;
+    const similarity = union > 0 ? intersection / union : 0;
+    return similarity < 0.20 || intersection === 0;
   }
   return false;
 }

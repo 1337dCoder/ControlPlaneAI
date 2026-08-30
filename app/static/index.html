@@ -368,8 +368,23 @@
       </div>
     </aside>
 
+    <!-- Topic Switch Auto-Offer Floating Modal -->
+    <div class="topic-switch-popup" id="topic-switch-popup" style="display: none;">
+      <div class="topic-popup-box">
+        <div class="topic-popup-header">
+          <span class="topic-popup-title">New Topic Detected</span>
+          <button class="topic-popup-close" onclick="dismissTopicOffer()">✕</button>
+        </div>
+        <p class="topic-popup-text">Your prompt appears to switch to a fresh topic. Would you like to start a clean conversation to save context tokens, or continue in this thread?</p>
+        <div class="topic-popup-actions">
+          <button class="btn-topic-dismiss" onclick="dismissTopicOffer()">Continue Here</button>
+          <button class="btn-topic-new" onclick="acceptNewChatOffer()">Start Fresh Chat</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <script src="/app.js?v=9.0"></script>
+  <script src="/app.js?v=9.1"></script>
 </body>
 </html>
