@@ -238,6 +238,18 @@ function renderInspectorContent() {
   }
 }
 
+function getPromptInput() {
+  return document.getElementById("prompt-input") || document.getElementById("user-prompt");
+}
+
+function getModelSelect() {
+  return document.getElementById("model-override-select") || document.getElementById("tier-select");
+}
+
+function getInputDock() {
+  return document.querySelector(".input-dock-container") || document.getElementById("chat-dock");
+}
+
 const STARTER_PROMPTS = {
   normal: "Explain the time complexity of quicksort in markdown with best, average, and worst cases.",
   dedup: "Explain the time complexity of quicksort in markdown with best, average, and worst cases.",
@@ -246,8 +258,8 @@ const STARTER_PROMPTS = {
 };
 
 function useStarterPrompt(key) {
-  const promptInput = document.getElementById("user-prompt");
-  if (STARTER_PROMPTS[key]) {
+  const promptInput = getPromptInput();
+  if (promptInput && STARTER_PROMPTS[key]) {
     promptInput.value = STARTER_PROMPTS[key];
     promptInput.focus();
     autoResizeTextarea(promptInput);
@@ -320,7 +332,7 @@ function acceptNewChatOffer() {
 }
 
 function executePrompt(text) {
-  const textarea = document.getElementById("user-prompt");
+  const textarea = getPromptInput();
   const form = document.getElementById("chat-form");
   if (textarea && form) {
     textarea.value = text;
@@ -333,11 +345,15 @@ function resetToNewChat() {
   dismissTopicOffer();
   switchView('chat');
   const messagesList = document.getElementById("messages-list");
-  messagesList.innerHTML = "";
-  document.getElementById("welcome-hero").style.display = "flex";
-  const textarea = document.getElementById("user-prompt");
-  textarea.value = "";
-  textarea.focus();
+  if (messagesList) messagesList.innerHTML = "";
+  const hero = document.getElementById("welcome-hero");
+  if (hero) hero.style.display = "flex";
+  const textarea = getPromptInput();
+  if (textarea) {
+    textarea.value = "";
+    textarea.focus();
+    autoResizeTextarea(textarea);
+  }
   lastResponseData = null;
   renderInspectorContent();
 }
@@ -348,15 +364,13 @@ function switchView(viewName) {
 
   const targetPanel = document.getElementById(`view-${viewName}`);
   const targetNav = document.querySelector(`.nav-item[data-view="${viewName}"]`);
-  const chatDock = document.getElementById("chat-dock");
+  const chatDock = getInputDock();
 
   if (targetPanel) targetPanel.classList.add("active");
   if (targetNav) targetNav.classList.add("active");
 
-  if (viewName === "chat") {
-    chatDock.style.display = "block";
-  } else {
-    chatDock.style.display = "none";
+  if (chatDock) {
+    chatDock.style.display = viewName === "chat" ? "block" : "none";
   }
 
   if (viewName === "audit") {
@@ -376,12 +390,13 @@ function initSidebar() {
 }
 
 function autoResizeTextarea(el) {
+  if (!el) return;
   el.style.height = "auto";
   el.style.height = Math.min(el.scrollHeight, 160) + "px";
 }
 
 function initChatInput() {
-  const textarea = document.getElementById("user-prompt");
+  const textarea = getPromptInput();
   const form = document.getElementById("chat-form");
   if (!textarea || !form) return;
 
@@ -390,7 +405,8 @@ function initChatInput() {
   textarea.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      document.getElementById("btn-send").click();
+      const sendBtn = document.getElementById("btn-send");
+      if (sendBtn) sendBtn.click();
     }
   });
 
@@ -405,9 +421,11 @@ function initChatInput() {
     }
 
     conversationPrompts.push(prompt);
-    const modelOverride = document.getElementById("tier-select").value || null;
+    const modelSelect = getModelSelect();
+    const modelOverride = modelSelect ? modelSelect.value || null : null;
 
-    document.getElementById("welcome-hero").style.display = "none";
+    const hero = document.getElementById("welcome-hero");
+    if (hero) hero.style.display = "none";
 
     appendUserMessage(prompt);
     textarea.value = "";
@@ -415,7 +433,7 @@ function initChatInput() {
 
     const loadingId = appendLoadingAssistant();
     const sendBtn = document.getElementById("btn-send");
-    sendBtn.disabled = true;
+    if (sendBtn) sendBtn.disabled = true;
 
     try {
       const res = await fetch(`${getApiBaseUrl()}/v1/chat`, {
@@ -621,10 +639,11 @@ function renderAssistantResponseWithTypewriter(loadingId, resp) {
 }
 
 function submitClarificationChoice(choiceText) {
-  const textarea = document.getElementById("user-prompt");
+  const textarea = getPromptInput();
   if (textarea) {
     textarea.value = `Focus on: ${choiceText}`;
-    document.getElementById("btn-send").click();
+    const sendBtn = document.getElementById("btn-send");
+    if (sendBtn) sendBtn.click();
   }
 }
 
